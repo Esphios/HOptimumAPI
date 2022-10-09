@@ -7,6 +7,7 @@ const Funcionario = mongoose.model(
       nome: { type: String, required: true },
       telefone: { type: String, required: false },
       nascimento: { type: Date, required: true },
+      senha: { type: String, required: true },
       genero: {
         type: String,
         enum: ["M", "F", "X"],

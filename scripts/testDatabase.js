@@ -68,7 +68,8 @@ const run = async function () {
     email: "func1@gmail.com",
     telefone: "111111111",
     nascimento: "11-11-1911",
-    genero: "M"
+    genero: "M",
+    senha: "1234"
   });
   var servicoA = await createServico({
     nome: "servicoA",
@@ -88,6 +89,7 @@ const run = async function () {
     email: "func2@gmail.com",
     telefone: "222222222",
     nascimento: "12-22-1922",
+    senha: "1234"
   });
 
   var fs2b = await addFuncionarioServico(func2._id, servicoB._id);
