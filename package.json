@@ -1,0 +1,34 @@
+{
+  "name": "hoptimumapi",
+  "version": "1.0.0",
+  "description": "Aplicação de sistemas integrados para redes de hotelaria",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "nodemon server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Esphios/HOptimumAPI.git"
+  },
+  "keywords": [
+    "hotel",
+    "rest",
+    "api"
+  ],
+  "author": "Eduardo Lima",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Esphios/HOptimumAPI/issues"
+  },
+  "homepage": "https://github.com/Esphios/HOptimumAPI#readme",
+  "dependencies": {
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "http": "^0.0.1-security",
+    "mongoose": "^6.5.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.19"
+  }
+}

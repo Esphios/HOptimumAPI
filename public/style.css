@@ -1,0 +1,54 @@
+html * {
+  width: 100%;
+}
+body {
+  height: 100vh;
+  background-color: #676fb4 !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background: linear-gradient(180deg, #676fb4 0%, #676fb4 20%, #676fb4 52%)
+    fixed;
+}
+pre {
+  text-align: left;
+  margin-left: 0.2em;
+  margin-right: 0.2em;
+}
+#display {
+  min-width: 255px;
+  max-height: 500px;
+  overflow: auto;
+  margin: auto;
+  margin-top: 0.3em;
+  border-radius: 1em;
+  background-color: #676fb4;
+  color: black;
+  padding: 0.2em 0.4em 0.7em 0.4em;
+  font-size: 0.75em;
+  overflow-wrap: break-word !important;
+}
+
+.title {
+  color: #d2d7ff;
+  padding: 1em;
+  text-align: center;
+  margin: auto;
+  font-size: 2rem;
+}
+
+.title h1 { 
+  text-align: center;
+  font-size: 4.4rem;
+}
+
+.none {
+  display: none;
+}
+
+footer div {
+  font-size: 1.5em;
+}
+
+p {
+  margin-bottom: 0.2em !important;
+}

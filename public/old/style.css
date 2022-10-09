@@ -1,0 +1,164 @@
+html * {
+  font-family: "Nanum Pen Script", cursive !important;
+  width: 100%;
+}
+body {
+  height: 100vh;
+  background-color: #ffe2d2 !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background: linear-gradient(180deg, #ffe2d2 0%, #ffdacb 20%, #fad4c5 52%)
+    fixed;
+}
+pre {
+  text-align: left;
+  margin-left: 0.2em;
+  margin-right: 0.2em;
+}
+.dropdown {
+  margin: auto;
+  width: 50%;
+  min-width: 250px;
+}
+.dropdown button {
+  font-size: 0.8em;
+}
+.dropdown-menu {
+  margin: auto;
+}
+
+.dropdown .btn {
+  background-color: #d7b3c9;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: #be9db2 !important;
+}
+
+.dropdown-item {
+  font-size: 1.3em;
+}
+
+#tea-gif {
+  text-align: center;
+}
+.row {
+  margin-left: 0 !important;
+}
+video {
+  height: auto;
+}
+#display {
+  min-width: 255px;
+  max-height: 500px;
+  overflow: auto;
+  margin: auto;
+  margin-top: 0.3em;
+  border-radius: 1em;
+  background-color: #f8beba;
+  color: black;
+  padding: 0.2em 0.4em 0.7em 0.4em;
+  font-size: 0.75em;
+  overflow-wrap: break-word !important;
+}
+
+#sampleui {
+  margin: auto;
+  height: 100%;
+  width: 80%;
+}
+
+@media only screen and (max-width: 900px) {
+  video {
+    display: block;
+  }
+}
+
+.title {
+  color: #b46784;
+  padding: 1em;
+  text-align: center;
+  margin: auto;
+  font-size: 2rem;
+}
+
+.title h1 {
+  text-align: center;
+  font-size: 4.4rem;
+}
+
+form {
+  padding: 1em;
+}
+input {
+  border: none;
+  border-radius: 1em;
+  padding: 0.2em;
+  width: 40%;
+  margin-top: 10px !important;
+  min-width: 190px;
+}
+
+*:focus {
+  outline: none !important;
+}
+
+button:hover {
+  background-color: rgb(226, 72, 72);
+}
+
+.tea-btn {
+  max-width: 260px;
+  min-width: 250px;
+  background-color: rgb(241, 137, 137);
+  padding: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 0.9em;
+  margin: auto;
+  margin-bottom: 25px;
+  cursor: pointer;
+  border-radius: 1em;
+  border: none;
+  color: white;
+}
+
+.tea-btn:hover {
+  background-color: rgb(236, 99, 99);
+  color: white !important;
+  text-decoration: none !important;
+}
+
+.form-btn {
+  width: 20%;
+  min-width: 150px;
+  background-color: rgb(236, 99, 99);
+  padding: 0.1em;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 0.9em;
+  margin-top: 0.5em;
+  cursor: pointer;
+  border-radius: 1em;
+  border: none;
+  color: white;
+}
+
+form {
+  padding: 0.2em;
+  padding-bottom: 0.6em;
+}
+.none {
+  display: none;
+}
+
+footer div {
+  font-size: 1.5em;
+}
+
+p {
+  margin-bottom: 0.2em !important;
+}
