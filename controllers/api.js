@@ -1,4 +1,4 @@
-const path = require('path');
+// const path = require('path');
 
 //GET '/api'
 const getAllObj = (req, res, next) => {
@@ -37,5 +37,6 @@ module.exports = {
     deleteAllObj,
     getOneObj,
     newComment,
-    deleteOneObj
+    deleteOneObj,
+    authenticate: require('./esp').authenticate
 };

@@ -6,8 +6,10 @@ router.get('/api', apiController.getAllObj);
 router.post('/api', apiController.newObj);
 router.delete('/api', apiController.deleteAllObj);
 
-router.get('/api/:name', apiController.getOneObj);
-router.post('/api/:name', apiController.newComment);
-router.delete('/api/:name', apiController.deleteOneObj);
+// router.get('/api/:name', apiController.getOneObj);
+// router.post('/api/:name', apiController.newComment);
+// router.delete('/api/:name', apiController.deleteOneObj);
+
+router.post('/api/auth', apiController.authenticate);
 
 module.exports = router;

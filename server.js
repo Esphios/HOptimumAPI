@@ -10,6 +10,8 @@ app.use("/", routes);
 
 const http = require("http").Server(app);
 
+const script = require("./scripts/testDatabase");
+
 //establish connection to database
 const mongoose = require("mongoose");
 mongoose.connect(
@@ -24,12 +26,9 @@ mongoose.connect(
       "MongoDB Connection -- Ready state is:",
       mongoose.connection.readyState
     );
+    // script.run();
   }
 );
-
-const script = require("./scripts/testDatabase");
-script.dropAll();
-script.run();
 
 const listener = http.listen(process.env.PORT || 3000, () => {
   console.log("Your app is listening on port " + listener.address().port);

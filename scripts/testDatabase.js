@@ -7,6 +7,7 @@ const createFuncionario = function (funcionario) {
     return docFuncionario;
   });
 };
+
 const createServico = function (servico) {
   return db.Servico.create(servico).then((docServico) => {
     console.log("\n>> Created Servico:\n", docServico);
@@ -34,13 +35,16 @@ const addFuncionarioServico = async function (funcionarioId, servicoId) {
 };
 
 const getFuncionarioWithPopulate = function (id) {
-  return db.Funcionario.findById(id).populate({
-    path: "servicos",
-    populate: {
-      path: "servico",
-    },
-  });
+  return db.Funcionario.findById(id)
+    .populate("cartoesChave")
+    .populate({
+      path: "servicos",
+      populate: {
+        path: "servico",
+      },
+    });
 };
+
 const getServicoWithPopulate = function (id) {
   return db.Servico.findById(id).populate({
     path: "funcionarios",
@@ -50,17 +54,36 @@ const getServicoWithPopulate = function (id) {
   });
 };
 
-async function sleep(milliseconds) {
-  const date = Date.now();
-  let currentDate = null;
-  do {
-    currentDate = Date.now();
-  } while (currentDate - date < milliseconds);
-}
+const createQuarto = function (quarto) {
+  return db.Quarto.create(quarto).then((q) => {
+    console.log("\n>> Created Quarto:\n", q);
+    return q;
+  });
+};
+
+const createCartaoChave = function (id) {
+  return db.CartaoChave.create({ codigo: id }).then((cartao) => {
+    console.log("\n>> Created Cartao:\n", cartao);
+    return cartao;
+  });
+};
+
+const pushCartaoChaveToFunc = function (funcId, cartao) {
+  return db.Funcionario.updateOne(
+    { _id: funcId },
+    { $push: { cartoesChave: cartao } }
+  );
+};
+
+const pullCartaoChaveToFunc = function (funcId, cartao) {
+  return db.Funcionario.updateOne(
+    { _id: funcId },
+    { $pull: { cartoesChave: cartao } }
+  );
+};
 
 const run = async function () {
-  console.log("Creating in 3, 2, 1...")
-  await sleep(200);
+  await dropAll();
 
   var func1 = await createFuncionario({
     nome: "Func #1",
@@ -69,7 +92,7 @@ const run = async function () {
     telefone: "111111111",
     nascimento: "11-11-1911",
     genero: "M",
-    senha: "1234"
+    senha: "1234",
   });
   var servicoA = await createServico({
     nome: "servicoA",
@@ -89,8 +112,34 @@ const run = async function () {
     email: "func2@gmail.com",
     telefone: "222222222",
     nascimento: "12-22-1922",
-    senha: "1234"
+    senha: "1234",
   });
+
+  var quarto1 = await createQuarto({
+    nome: "Quarto top",
+    numero: "25a",
+    macAddressEsp: "84-68-26-C6-5A-54",
+    maxOcupantes: 5,
+    precoBase: 500,
+    ocupado: false,
+  });
+
+  var quarto2 = await createQuarto({
+    nome: "Quarto nao tao top",
+    numero: "25b",
+    macAddressEsp: "F9-2E-99-E4-E1-02",
+    maxOcupantes: 2,
+    precoBase: 150,
+    ocupado: false,
+  });
+
+  var card1 = await createCartaoChave("12 34 56 78");
+  var card2 = await createCartaoChave("87 65 43 21");
+
+  t1 = await pushCartaoChaveToFunc(func1._id, card1);
+  t2 = await pushCartaoChaveToFunc(func2._id, card2);
+
+  // console.log(t1, t2);
 
   var fs2b = await addFuncionarioServico(func2._id, servicoB._id);
   console.log("\n>> fs2b:\n", fs2b);
@@ -102,14 +151,21 @@ const run = async function () {
   console.log("\n>> populated servicoB:\n", servico);
 };
 
-const dropAll = async function () {
-  const collections = await mongoose.connection.collections;
-
-  // Create an array of collection names and drop each collection
-  Object.keys(collections).forEach(async (collectionName) => {
-    collections[collectionName].drop();
-    console.log(`Dropped collection ${collectionName} successfully!`);
+const dropCollection = function (collection) {
+  return new Promise((resolve) => {
+    mongoose.connection.collections[collection].drop({}, () => {
+      console.log(`Dropped collection ${collection} successfully!`);
+      resolve(collection);
+    });
   });
+};
+
+const dropAll = async function () {
+  const collections = Object.keys(mongoose.connection.collections);
+
+  for (var i = 0; i < collections.length; i++) {
+    await dropCollection(collections[i]);
+  }
 };
 
 module.exports = { run, dropAll };
