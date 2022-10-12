@@ -26,7 +26,7 @@ mongoose.connect(
       "MongoDB Connection -- Ready state is:",
       mongoose.connection.readyState
     );
-    // script.run();
+    script.run();
   }
 );
 

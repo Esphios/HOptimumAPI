@@ -1,3 +1,6 @@
+const mongoose = require("mongoose");
+const db = require("../models");
+
 const createFuncionario = function (funcionario) {
   return db.Funcionario.create(funcionario).then((docFuncionario) => {
     console.log("\n>> Created Funcionario:\n", docFuncionario);
