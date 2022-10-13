@@ -1,16 +1,78 @@
 const mongoose = require("mongoose");
 
 const {
+  createCargo,
   createFuncionario,
   createServico,
+  createHospede,
+  createReserva,
+  createCarro,
+  createLogCarro,
+  createQuarto,
+  createLogQuarto,
+  createCartaoChave,
   addFuncionarioServico,
+  addHospedeReserva,
   getFuncionarioWithPopulate,
   getServicoWithPopulate,
-  createQuarto,
-  createCartaoChave,
   pushCartaoChaveToFunc,
-  dropCollection
+  pullCartaoChaveToFunc,
+  dropCollection,
 } = require("./utilsDB");
+
+const addCargos = async function () {
+  var cargo1 = await createCargo({
+    nome: "segurança",
+    salarioBase: 2000,
+  });
+
+  var cargo2 = await createCargo({
+    nome: "limpeza",
+    salarioBase: 1500,
+  });
+
+  return [cargo1, cargo2];
+};
+
+const addHospedes = async function () {
+  var pessoa1 = await createHospede({
+    nome: "Pessoa #1",
+    cpf: "5678",
+    email: "pessoa1@gmail.com",
+    telefone: "123123123",
+    nascimento: "01-01-1901",
+    genero: "F",
+    senha: "11111",
+  });
+
+  var pessoa2 = await createHospede({
+    nome: "Pessoa #2",
+    cpf: "8765",
+    email: "pessoa2@gmail.com",
+    telefone: "3213213312",
+    nascimento: "02-02-1902",
+    genero: "M",
+    senha: "222222",
+  });
+
+  return [pessoa1, pessoa2];
+};
+
+const addCarros = async function () {
+  var carro1 = await createCarro({
+    cor: "azul",
+    modelo: "fiesta",
+    placa: "1651656",
+  });
+
+  var carro2 = await createCarro({
+    cor: "verde",
+    modelo: "gol bolinha",
+    placa: "4984949",
+  });
+
+  return [carro1, carro2];
+};
 
 const addFuncionarios = async function () {
   var func1 = await createFuncionario({
