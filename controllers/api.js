@@ -2,12 +2,13 @@
 
 //GET '/api'
 const getAllObj = (req, res, next) => {
-    res.json({message: "GET all api"});
+    // res.json({message: "GET all api"});
+    res.json({message: "FUNCIONA POHA"});
 };
 
 //POST '/api'
 const newObj = (req, res, next) => {
-    res.json({message: "POST new api"});
+    res.json({message: `Cê mandou isso aqui: ${JSON.stringify(req.body)}`});
 };
 
 //DELETE '/api'

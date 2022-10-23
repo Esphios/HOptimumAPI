@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const db = require("../models");
+const { sendToAll, connections } = require("./websocket.js");
 
 //POST '/api/authenticate'
 const authenticate = async (req, res, next) => {
@@ -13,6 +14,11 @@ const authenticate = async (req, res, next) => {
     var func = await db.Funcionario.findOne({ cartoesChave: card }).select('nome');
 
     if (func == null) return res.status(404).send({ error: "Cartão válido, porém nenhum usuário está ligado a ele." });
+
+    var now = new Date();
+    sendToAll(JSON.stringify({createdAt: now.toUTCString()}));
+    console.log(cartao, {createdAt: now.toUTCString()});
+    console.log(connections.length);
     return res.send(func);
 };
 

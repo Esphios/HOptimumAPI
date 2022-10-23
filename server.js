@@ -1,16 +1,9 @@
 const express = require("express");
+const { Server } = require("ws");
+const { handleConnection } = require("./controllers/websocket.js");
 const routes = require("./routes/api");
-
-require("dotenv").config();
-
-const app = express();
-app.use(express.json());
-app.use("/public", express.static(process.cwd() + "/public")); //make public static
-app.use("/", routes);
-
-const http = require("http").Server(app);
-
 const script = require("./scripts/testDatabase");
+require("dotenv").config();
 
 //establish connection to database
 const mongoose = require("mongoose");
@@ -26,10 +19,18 @@ mongoose.connect(
       "MongoDB Connection -- Ready state is:",
       mongoose.connection.readyState
     );
-    script.run();
+    // script.run();
   }
 );
 
-const listener = http.listen(process.env.PORT || 3000, () => {
-  console.log("Your app is listening on port " + listener.address().port);
-});
+const server = express()
+  .use(express.json())
+  .use("/public", express.static(process.cwd() + "/public")) //make public static
+  .use("/", routes)
+  .listen(process.env.PORT || 3000, () =>
+    console.log(`Listening on ${server.address().port}`)
+  );
+
+const wss = new Server({ server });
+
+wss.on("connection", handleConnection);

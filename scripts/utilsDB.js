@@ -129,6 +129,34 @@ const createCartaoChave = function (id) {
   });
 };
 
+const pushCarroToHospede = function (hospedeId, carro) {
+  return db.Hospede.updateOne(
+    { _id: hospedeId },
+    { $push: { carros: carro } }
+  );
+};
+
+const pushCarroToFunc = function (funcId, carro) {
+  return db.Hospede.updateOne(
+    { _id: funcId },
+    { $push: { carros: carro } }
+  );
+};
+
+const pushCartaoChaveToReserva = function (reservaId, cartao) {
+  return db.Reserva.updateOne(
+    { _id: reservaId },
+    { $push: { cartoesChave: cartao } }
+  );
+};
+
+const pullCartaoChaveFromReserva = function (reservaId, cartao) {
+  return db.Reserva.updateOne(
+    { _id: reservaId },
+    { $pull: { cartoesChave: cartao } }
+  );
+};
+
 const pushCartaoChaveToFunc = function (funcId, cartao) {
   return db.Funcionario.updateOne(
     { _id: funcId },
@@ -136,7 +164,7 @@ const pushCartaoChaveToFunc = function (funcId, cartao) {
   );
 };
 
-const pullCartaoChaveToFunc = function (funcId, cartao) {
+const pullCartaoChaveFromFunc = function (funcId, cartao) {
   return db.Funcionario.updateOne(
     { _id: funcId },
     { $pull: { cartoesChave: cartao } }
@@ -167,7 +195,11 @@ module.exports = {
   addHospedeReserva,
   getFuncionarioWithPopulate,
   getServicoWithPopulate,
+  pushCarroToHospede,
+  pushCarroToFunc,
+  pushCartaoChaveToReserva,
+  pullCartaoChaveFromReserva,
   pushCartaoChaveToFunc,
-  pullCartaoChaveToFunc,
+  pullCartaoChaveFromFunc,
   dropCollection,
 };
