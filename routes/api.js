@@ -1,6 +1,6 @@
 const express = require('express');
-const router  = express.Router(); 
-const apiController = require('../controllers/api'); 
+const router  = express.Router();
+const apiController = require('../controllers/api');
 
 router.get('/api', apiController.getAllObj);
 router.post('/api', apiController.newObj);
@@ -11,5 +11,7 @@ router.delete('/api', apiController.deleteAllObj);
 // router.delete('/api/:name', apiController.deleteOneObj);
 
 router.post('/api/auth', apiController.authenticate);
+router.post('/api/login', apiController.login);
+router.post('/api/garagem', apiController.garagem);
 
 module.exports = router;

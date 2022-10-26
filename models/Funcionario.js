@@ -5,6 +5,7 @@ const Funcionario = mongoose.model(
     {
       cpf: { type: String, required: true },
       nome: { type: String, required: true },
+      email: { type: String, required: true },
       telefone: { type: String, required: false },
       nascimento: { type: Date, required: true },
       senha: { type: String, required: true },
@@ -36,9 +37,9 @@ const Funcionario = mongoose.model(
         type: mongoose.Schema.Types.ObjectId,
         ref: "Cargo",
       },
-      // connections: [{ id: String, date: {type:String, default: new Date()} }]
+      conexoes: [String],
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = Funcionario;

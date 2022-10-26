@@ -1,6 +1,6 @@
 const express = require("express");
 const { Server } = require("ws");
-const { handleConnection } = require("./controllers/websocket.js");
+const { wsListener } = require("./controllers/websocket.js");
 const routes = require("./routes/api");
 const script = require("./scripts/testDatabase");
 require("dotenv").config();
@@ -31,6 +31,4 @@ const server = express()
     console.log(`Listening on ${server.address().port}`)
   );
 
-const wss = new Server({ server });
-
-wss.on("connection", handleConnection);
+wsListener(new Server({ server }))

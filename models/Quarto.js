@@ -9,14 +9,14 @@ const Quarto = mongoose.model(
       maxOcupantes: { type: Number, required: true },
       precoBase: { type: Number, required: true },
       ocupado: { type: Boolean, defaul: false, required: true },
-      Registros: [
+      registros: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "LogQuarto",
         }
       ]
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = Quarto;

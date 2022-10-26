@@ -18,9 +18,7 @@ const {
   pushCarroToHospede,
   pushCarroToFunc,
   pushCartaoChaveToReserva,
-  // pullCartaoChaveFromReserva,
   pushCartaoChaveToFunc,
-  // pullCartaoChaveFromFunc,
   dropCollection,
 } = require("./utilsDB");
 
@@ -63,30 +61,31 @@ const addHospedes = async function () {
 };
 
 const addReservas = async function (quartos) {
-  return quartos.map(async (quarto, i) => {
+  return await Promise.all(quartos.map(async (quarto) => {
     return await createReserva({
       quarto: quarto,
     });
-  });
+  }));
 };
 
 const addCarros = async function () {
   var carro1 = await createCarro({
     cor: "azul",
-    modelo: "fiesta",
-    placa: "1651656",
+    modelo: "renault fiesta",
+    placa: "FPE2324",
   });
 
   var carro2 = await createCarro({
     cor: "verde",
     modelo: "gol bolinha",
-    placa: "4984949",
+    placa: "BRA2E19",
   });
 
   return [carro1, carro2];
 };
 
 const addFuncionarios = async function () {
+  var cargos = await addCargos();
   var func1 = await createFuncionario({
     nome: "Func #1",
     cpf: "1234",
@@ -95,6 +94,7 @@ const addFuncionarios = async function () {
     nascimento: "11-11-1911",
     genero: "M",
     senha: "1234",
+    cargo: cargos[0]
   });
 
   var func2 = await createFuncionario({
@@ -104,6 +104,7 @@ const addFuncionarios = async function () {
     telefone: "222222222",
     nascimento: "12-22-1922",
     senha: "1234",
+    cargo: cargos[1]
   });
 
   return [func1, func2];
@@ -124,7 +125,7 @@ const addQuartos = async function () {
   var quarto1 = await createQuarto({
     nome: "Quarto top",
     numero: "25a",
-    macAddressEsp: "84-68-26-C6-5A-54",
+    macAddressEsp: "58:BF:25:33:3B:DC",
     maxOcupantes: 5,
     precoBase: 500,
     ocupado: false,
@@ -133,7 +134,7 @@ const addQuartos = async function () {
   var quarto2 = await createQuarto({
     nome: "Quarto nao tao top",
     numero: "25b",
-    macAddressEsp: "F9-2E-99-E4-E1-02",
+    macAddressEsp: "24:D1:34:6A:7D:F0",
     maxOcupantes: 2,
     precoBase: 150,
     ocupado: false,
@@ -144,7 +145,7 @@ const addQuartos = async function () {
 
 const addCartoes = async function () {
   var card1 = await createCartaoChave(" 3B 9C B6 1C");
-  var card2 = await createCartaoChave("87 65 43 21");
+  var card2 = await createCartaoChave(" 87 65 43 21");
 
   return [card1, card2];
 };
@@ -182,7 +183,7 @@ const run = async function () {
   t4 = await pushCarroToHospede(hospedes[0]._id, carros[1]);
 
 
-  funcionario = await getFuncionarioWithPopulate(func[0]._id);
+  funcionario = await getFuncionarioWithPopulate({ _id: func[0]._id });
   console.log("\n>> populated func1:\n", funcionario);
 
   servico = await getServicoWithPopulate(serv[1]._id);

@@ -13,7 +13,7 @@ var HospedeReservaSchema = new mongoose.Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: { currentTime: Date.now }}
 );
 
 HospedeReservaSchema.virtual("hospede", {

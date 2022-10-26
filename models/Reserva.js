@@ -32,7 +32,7 @@ const Reserva = mongoose.model(
         },
       ],
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = Reserva;

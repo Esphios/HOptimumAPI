@@ -6,14 +6,14 @@ const Carro = mongoose.model(
       cor: { type: String, required: true },
       modelo: { type: String, required: true },
       placa: { type: String, required: true },
-      Registros: [
+      registros: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: "LogCarro",
         }
       ]
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = Carro;

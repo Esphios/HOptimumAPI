@@ -9,7 +9,7 @@ var FuncionarioServicoSchema = new mongoose.Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: { currentTime: Date.now }}
 );
 
 FuncionarioServicoSchema.virtual("funcionario", {

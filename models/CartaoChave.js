@@ -5,7 +5,7 @@ const CartaoChave = mongoose.model(
     {
       codigo: { type: String, required: true },
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = CartaoChave;

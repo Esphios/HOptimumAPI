@@ -1,34 +1,62 @@
-var connections = [];
+const { v4: uuidv4 } = require("uuid");
+const { getPeople } = require("../scripts/utilsDB.js");
+const db = require("../models");
 
-const handleConnection = (ws) => {
-  ws.on("message", (message) => {
-    var dataString = message.toString();
-    if (dataString == "Hello") {
-      console.log(dataString);
-      ws.send("Hi from Node.js");
-    } else {
-      console.log(dataString);
-      ws.send("Are you not saying hi to me 🥺👉👈");
-    }
-  });
-  console.log("connection");
-  ws.onclose = function (event) {
-    connections.pop(ws);
-    console.log("disconnected");
-  };
-  connections.push(ws);
-  console.log("connection");
+var wss = null;
+
+wsListener = (_wss) => {
+  wss = _wss;
+  wss.getUniqueID = uuidv4;
+  wss.on("connection", handleConnection);
 };
 
+const handleConnection = (ws) => {
+  ws.id = wss.getUniqueID();
+  ws.send(ws.id);
+  console.log("connection: ", ws.id);
+
+  ws.on("message", (message) => {
+    // var dataString = message.toString();
+    // if (dataString == "Hello") {
+    //   console.log(dataString);
+    //   ws.send("Hi from Node.js");
+    // } else {
+    //   console.log(dataString);
+    //   ws.send("Are you not saying hi to me 🥺👉👈");
+    // }
+  });
+  ws.onclose = async function (event) {
+    // connections.pop(ws);
+    console.log("disconnected");
+    data = { conexoes: ws.id };
+
+    var p = await getPeople(data);
+    switch(p.type) {
+      case 'hospede':
+        return await db.Hospede.updateOne({ _id: p.data._id }, { $pull: data });
+      case 'funcionario':
+        return await db.Funcionario.updateOne({ _id: func._id }, { $pull: data });
+    }
+  };
+};
+
+const sendToClient = (id, message) => {
+  var c = wss.clients.find((client) => client.id == id);
+  if (c == null) return false;
+  c.send(message);
+  return true;
+}
+
 const sendToAll = (message) => {
-  connections.forEach((conn) => {
-    conn.send(message);
+  wss.clients.forEach((client) => {
+    client.send(message);
   });
 };
 
 //export controller functions
 module.exports = {
-  connections,
-  handleConnection,
+  wss,
+  wsListener,
+  sendToClient,
   sendToAll,
 };

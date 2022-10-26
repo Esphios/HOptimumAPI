@@ -88,13 +88,47 @@ const addHospedeReserva = async function (hospedeId, reservaId) {
   return doc;
 };
 
-const getFuncionarioWithPopulate = function (id) {
-  return db.Funcionario.findById(id)
+const getFuncionarioWithPopulate = function (func) {
+  return db.Funcionario.findOne(func)
+    .select("-senha")
     .populate("cartoesChave")
     .populate({
       path: "servicos",
       populate: {
         path: "servico",
+      },
+    })
+    .populate({
+      path: "carros",
+      populate: {
+        path: "registros",
+      },
+    });
+};
+
+const getPeople = async function (data) {
+  var func = await getFuncionarioWithPopulate(data);
+  if (func == null) {
+    var hosp = await getHospedeWithPopulate(data);
+    if (hosp == null) return { type: null, data: null };
+    return { type: 'hospede', data: hosp };
+  }
+  return { type: 'funcionario', data: func };;
+};
+
+const getHospedeWithPopulate = function (pessoa) {
+  return db.Hospede.findOne(pessoa)
+    .select("-senha")
+    .populate({
+      path: "reservas",
+      populate: {
+        path: "reserva",
+      },
+    })
+    .populate({
+      path: "carros",
+      populate: {
+        path: "registros",
       },
     });
 };
@@ -130,17 +164,11 @@ const createCartaoChave = function (id) {
 };
 
 const pushCarroToHospede = function (hospedeId, carro) {
-  return db.Hospede.updateOne(
-    { _id: hospedeId },
-    { $push: { carros: carro } }
-  );
+  return db.Hospede.updateOne({ _id: hospedeId }, { $push: { carros: carro } });
 };
 
 const pushCarroToFunc = function (funcId, carro) {
-  return db.Hospede.updateOne(
-    { _id: funcId },
-    { $push: { carros: carro } }
-  );
+  return db.Hospede.updateOne({ _id: funcId }, { $push: { carros: carro } });
 };
 
 const pushCartaoChaveToReserva = function (reservaId, cartao) {
@@ -193,6 +221,8 @@ module.exports = {
   createCartaoChave,
   addFuncionarioServico,
   addHospedeReserva,
+  getPeople,
+  getHospedeWithPopulate,
   getFuncionarioWithPopulate,
   getServicoWithPopulate,
   pushCarroToHospede,

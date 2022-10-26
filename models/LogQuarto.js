@@ -3,16 +3,20 @@ const LogQuarto = mongoose.model(
   "LogQuarto",
   new mongoose.Schema(
     {
-      Funcionario: {
+      funcionario: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Funcionario",
       },
-      Hospede: {
+      reserva: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Hospede",
+        ref: "Reserva",
+      },
+      cartao: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CartaoChave",
       },
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = LogQuarto;

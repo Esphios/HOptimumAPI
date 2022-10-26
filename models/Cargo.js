@@ -6,7 +6,7 @@ const Cargo = mongoose.model(
       nome: { type: String, required: true },
       salarioBase: { type: Number, required: true },
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = Cargo;

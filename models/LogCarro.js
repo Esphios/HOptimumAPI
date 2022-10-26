@@ -5,7 +5,7 @@ const LogCarro = mongoose.model(
     {
       status: { type: String, required: true },
     },
-    { timestamps: true }
+    { timestamps: { currentTime: Date.now }}
   )
 );
 module.exports = LogCarro;
