@@ -9,6 +9,8 @@ const login = async (req, res) => {
   const senha = req.body.senha;
   const id = req.body.id;
 
+  console.log(req.body);
+
   if (!isValid(email) || !isValid(senha) || !isValid(id))
     return res.status(400).send({ error: "Missing information" });
 

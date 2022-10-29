@@ -12,7 +12,7 @@ wsListener = (_wss) => {
 
 const handleConnection = (ws) => {
   ws.id = wss.getUniqueID();
-  ws.send(ws.id);
+  ws.send(JSON.stringify({loginId: ws.id}));
   console.log("connection: ", ws.id);
 
   ws.on("message", (message) => {
@@ -35,7 +35,7 @@ const handleConnection = (ws) => {
       case 'hospede':
         return await db.Hospede.updateOne({ _id: p.data._id }, { $pull: data });
       case 'funcionario':
-        return await db.Funcionario.updateOne({ _id: func._id }, { $pull: data });
+        return await db.Funcionario.updateOne({ _id: p.data._id }, { $pull: data });
     }
   };
 };
