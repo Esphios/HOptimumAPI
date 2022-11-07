@@ -69,10 +69,11 @@ const addFuncionarioServico = async function (funcionarioId, servicoId) {
   return doc;
 };
 
-const addHospedeReserva = async function (hospedeId, reservaId) {
+const addHospedeReserva = async function (hospedeId, reservaId, titular = true) {
   var doc = await db.HospedeReserva.create({
     reservaId: reservaId,
     hospedeId: hospedeId,
+    titular: titular
   }).then((doc) => {
     console.log("\n>> Created HospedeReserva:\n", doc);
     return doc;
@@ -92,10 +93,72 @@ const getFuncionarioWithPopulate = function (func) {
   return db.Funcionario.findOne(func)
     .select("-senha")
     .populate("cartoesChave")
+    .populate("cargo")
     .populate({
       path: "servicos",
       populate: {
         path: "servico",
+      },
+    })
+    .populate({
+      path: "carros",
+      populate: {
+        path: "registros",
+      },
+    });
+};
+
+const getReservaWithPopulate = function (reserva) {
+  return db.Reserva.findOne(reserva)
+    .populate("cartoesChave")
+    .populate({
+      path: "hospedes",
+      populate: {
+        path: "hospede",
+        select: "-senha -reservas",
+        populate: {
+          path: "carros",
+          populate: {
+            path: "registros",
+          },
+        },
+      },
+    })
+    .populate ({
+      path: "quarto",
+      populate: {
+        path: "registros",
+      },
+    })
+};
+
+
+const getHospedeWithPopulate = function (pessoa) {
+  return db.Hospede.findOne(pessoa)
+    .select("-senha")
+    .populate({
+      path: "reservas",
+      populate: {
+        path: "reserva",
+        populate: {
+          path: "hospedes",
+          populate: {
+            path: "hospede",
+            select: "-senha -reservas",
+          },
+        },
+      },
+    })
+    .populate({
+      path: "reservas",
+      populate: {
+        path: "reserva",
+        populate: {
+          path: "quarto",
+          populate: {
+            path: "registros",
+          },
+        },
       },
     })
     .populate({
@@ -116,21 +179,14 @@ const getPeople = async function (data) {
   return { type: 'funcionario', data: func };;
 };
 
-const getHospedeWithPopulate = function (pessoa) {
-  return db.Hospede.findOne(pessoa)
-    .select("-senha")
-    .populate({
-      path: "reservas",
-      populate: {
-        path: "reserva",
-      },
-    })
-    .populate({
-      path: "carros",
-      populate: {
-        path: "registros",
-      },
-    });
+const getPeopleESP = async function (data) {
+  var func = await getFuncionarioWithPopulate({ cartoesChave: data.cartoesChave });
+  if (func == null) {
+    var hosp = await getReservaWithPopulate(data);
+    if (hosp == null) return { type: null, data: null };
+    return { type: 'hospede', data: hosp };
+  }
+  return { type: 'funcionario', data: func };;
 };
 
 const getServicoWithPopulate = function (id) {
@@ -168,7 +224,7 @@ const pushCarroToHospede = function (hospedeId, carro) {
 };
 
 const pushCarroToFunc = function (funcId, carro) {
-  return db.Hospede.updateOne({ _id: funcId }, { $push: { carros: carro } });
+  return db.Funcionario.updateOne({ _id: funcId }, { $push: { carros: carro } });
 };
 
 const pushCartaoChaveToReserva = function (reservaId, cartao) {
@@ -222,6 +278,7 @@ module.exports = {
   addFuncionarioServico,
   addHospedeReserva,
   getPeople,
+  getPeopleESP,
   getHospedeWithPopulate,
   getFuncionarioWithPopulate,
   getServicoWithPopulate,

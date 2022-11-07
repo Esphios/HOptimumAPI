@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const db = require("../models");
-const { createLogQuarto } = require("../scripts/utilsDB");
-const { sendToAll } = require("./websocket.js");
+const { getPeopleESP, createLogQuarto: logQuarto } = require("../scripts/utilsDB.js");
+const { sendToClient } = require("./websocket.js");
 
 const isValid = (string) => string != null && string.length > 0;
 
@@ -22,25 +22,34 @@ const authenticate = async (req, res) => {
     if (card == null)
         return res.status(404).send({ error: "Cartão não encontrado." });
 
-    var ok = null;
-    var log = null;
-    ok = await db.Funcionario.findOne({ cartoesChave: card }).select('nome');
+    var p = await getPeopleESP({ quarto: quarto, cartoesChave: card });
 
-    if (ok == null) {
-        ok = await db.Reserva.findOne({ cartoesChave: card, quarto: quarto }).select('hospedes');
-        if (ok == null)
-            return res.status(401).send({ error: "Acesso negado." });
-        log = await createLogQuarto({ cartao: card, reserva: ok });
-    } else {
-        log = await createLogQuarto({ cartao: card, funcionario: ok });
+    const getConexoesFromReserva = (reserva) => {
+        var conexoes = [];
+        reserva.hospedes.forEach( (h) => {
+            conexoes.push(...h.hospede.conexoes );
+        })
+        return conexoes;
     }
 
-    await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
-    // return res.status(200).send(log);
+    switch (p.type) {
 
-    sendToAll(JSON.stringify(log));
-    console.log(log);
-    return res.status(200).send(log);
+        case "hospede":
+            var log = await logQuarto({ cartao: card, reserva: p.data });
+            const conexoes = getConexoesFromReserva(p.data)
+            conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
+            return res.status(200).json({ reserva: p.data });
+
+        case "funcionario":
+            var log = await logQuarto({ cartao: card, funcionario: p.data });
+            p.data.conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
+            return res.status(200).json({ funcionario: p.data });
+
+        default:
+            return res
+                .status(404)
+                .send({ error: "Pessoa não encontrada, confira as credenciais" });
+    }
 };
 
 //export controller functions

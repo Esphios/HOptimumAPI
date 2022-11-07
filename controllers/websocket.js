@@ -12,7 +12,7 @@ wsListener = (_wss) => {
 
 const handleConnection = (ws) => {
   ws.id = wss.getUniqueID();
-  ws.send(JSON.stringify({loginId: ws.id}));
+  ws.send(JSON.stringify({ loginId: ws.id }));
   console.log("connection: ", ws.id);
 
   ws.on("message", (message) => {
@@ -31,7 +31,7 @@ const handleConnection = (ws) => {
     data = { conexoes: ws.id };
 
     var p = await getPeople(data);
-    switch(p.type) {
+    switch (p.type) {
       case 'hospede':
         return await db.Hospede.updateOne({ _id: p.data._id }, { $pull: data });
       case 'funcionario':
@@ -41,10 +41,13 @@ const handleConnection = (ws) => {
 };
 
 const sendToClient = (id, message) => {
-  var c = wss.clients.find((client) => client.id == id);
-  if (c == null) return false;
-  c.send(message);
-  return true;
+  if (wss.clients != null && wss.clients.size > 0) {
+    wss.clients.forEach((socket) => {
+      if (socket.id === id) socket.send(message);
+    });
+    return true;
+  }
+  return false;
 }
 
 const sendToAll = (message) => {

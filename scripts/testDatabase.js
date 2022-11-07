@@ -54,10 +54,30 @@ const addHospedes = async function () {
     telefone: "3213213312",
     nascimento: "02-02-1902",
     genero: "M",
-    senha: "222222",
+    senha: "22222",
   });
 
-  return [pessoa1, pessoa2];
+  var dependente1 = await createHospede({
+    nome: "Dependente #1",
+    cpf: "6165",
+    email: "dependente1@gmail.com",
+    telefone: "4546546546",
+    nascimento: "12-01-1991",
+    genero: "F",
+    senha: "00000",
+  });
+
+  var dependente2 = await createHospede({
+    nome: "Dependente #2",
+    cpf: "7987",
+    email: "dependente2@gmail.com",
+    telefone: "46546546",
+    nascimento: "12-02-1982",
+    genero: "M",
+    senha: "00000",
+  });
+
+  return [pessoa1, pessoa2, dependente1, dependente2];
 };
 
 const addReservas = async function (quartos) {
@@ -70,8 +90,8 @@ const addReservas = async function (quartos) {
 
 const addCarros = async function () {
   var carro1 = await createCarro({
-    cor: "azul",
-    modelo: "renault fiesta",
+    cor: "preto",
+    modelo: "fuscão",
     placa: "FPE2324",
   });
 
@@ -81,7 +101,13 @@ const addCarros = async function () {
     placa: "BRA2E19",
   });
 
-  return [carro1, carro2];
+  var carro3 = await createCarro({
+    cor: "prata",
+    modelo: "tesla S",
+    placa: "BRA2E55",
+  });
+
+  return [carro1, carro2, carro3];
 };
 
 const addFuncionarios = async function () {
@@ -134,20 +160,33 @@ const addQuartos = async function () {
   var quarto2 = await createQuarto({
     nome: "Quarto nao tao top",
     numero: "25b",
-    macAddressEsp: "24:D1:34:6A:7D:F0",
+    macAddressEsp: "EC:62:60:83:ED:54",
     maxOcupantes: 2,
     precoBase: 150,
     ocupado: false,
   });
 
-  return [quarto1, quarto2];
+  var quarto3 = await createQuarto({
+    nome: "Quarto lixo",
+    numero: "1a",
+    macAddressEsp: "0C:B8:15:D8:7C:EC",
+    maxOcupantes: 1,
+    precoBase: 50,
+    ocupado: false,
+  });
+
+  return [quarto1, quarto2, quarto3];
 };
 
 const addCartoes = async function () {
   var card1 = await createCartaoChave(" 3B 9C B6 1C");
-  var card2 = await createCartaoChave(" 87 65 43 21");
+  var card2 = await createCartaoChave(" DA 5B BE 15");
+  var card3 = await createCartaoChave(" BA 66 67 15");
+  var card4 = await createCartaoChave(" 4B DF AC 1C");
+  var card5 = await createCartaoChave(" 0B 51 94 1C");
+  var card6 = await createCartaoChave(" 0A 85 7F 15");
 
-  return [card1, card2];
+  return [card1, card2, card3, card4, card5, card6];
 };
 
 const run = async function () {
@@ -159,28 +198,37 @@ const run = async function () {
   var serv = await addServicos();
 
   var hospedes = await addHospedes();
-  var reservas = await addReservas(quartos);
+  var reservas = await addReservas([quartos[0], quartos[1]]);
 
   var fs00 = await addFuncionarioServico(func[0]._id, serv[0]._id);
-  console.log("\n>> fs1a:\n", fs00);
+  // console.log("\n>> fs1a:\n", fs00);
   var fs01 = await addFuncionarioServico(func[0]._id, serv[1]._id);
-  console.log("\n>> fs1b:\n", fs01);
+  // console.log("\n>> fs1b:\n", fs01);
   var fs11 = await addFuncionarioServico(func[1]._id, serv[1]._id);
-  console.log("\n>> fs2b:\n", fs11);
+  // console.log("\n>> fs2b:\n", fs11);
 
 
   var hr00 = await addHospedeReserva(hospedes[0]._id, reservas[0]._id);
-  console.log("\n>> hr00:\n", hr00);
+  // console.log("\n>> hr00:\n", hr00);
   var hr11 = await addHospedeReserva(hospedes[1]._id, reservas[1]._id);
-  console.log("\n>> hr11:\n", hr11);
+  // console.log("\n>> hr11:\n", hr11);
+  var hr20 = await addHospedeReserva(hospedes[2]._id, reservas[0]._id, titular=false);
+  // console.log("\n>> hr20:\n", hr20);
+  var hr30 = await addHospedeReserva(hospedes[3]._id, reservas[0]._id, titular=false);
+  // console.log("\n>> hr30:\n", hr30);
 
   t1 = await pushCartaoChaveToFunc(func[0]._id, cards[0]);
   t2 = await pushCartaoChaveToReserva(reservas[0]._id, cards[1]);
+  t3 = await pushCartaoChaveToReserva(reservas[0]._id, cards[2]);
+  t4 = await pushCartaoChaveToReserva(reservas[0]._id, cards[3]);
+  t5 = await pushCartaoChaveToFunc(func[1]._id, cards[4]);
+  t6 = await pushCartaoChaveToReserva(reservas[1]._id, cards[6]);
 
   var carros = await addCarros();
 
-  t3 = await pushCarroToFunc(func[0]._id, carros[0]);
-  t4 = await pushCarroToHospede(hospedes[0]._id, carros[1]);
+  c1 = await pushCarroToFunc(func[0]._id, carros[0]);
+  c1 = await pushCarroToFunc(func[1]._id, carros[1]);
+  c2 = await pushCarroToHospede(hospedes[0]._id, carros[2]);
 
 
   funcionario = await getFuncionarioWithPopulate({ _id: func[0]._id });

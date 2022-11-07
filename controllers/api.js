@@ -1,6 +1,7 @@
 // const path = require('path');
-const { getPeople, createLogCarro: logCarro, createLogQuarto: logQuarto } = require("../scripts/utilsDB.js");
+const { getPeople, createLogCarro: logCarro } = require("../scripts/utilsDB.js");
 const db = require("../models");
+const { sendToClient } = require("./websocket.js");
 
 const isValid = (string) => string != null && string.length > 0;
 //POST '/api/login'
@@ -9,7 +10,7 @@ const login = async (req, res) => {
   const senha = req.body.senha;
   const id = req.body.id;
 
-  console.log(req.body);
+  // console.log(req.body);
 
   if (!isValid(email) || !isValid(senha) || !isValid(id))
     return res.status(400).send({ error: "Missing information" });
@@ -20,10 +21,12 @@ const login = async (req, res) => {
 
     case "hospede":
       if (!p.data.conexoes.includes(id)) await db.Hospede.updateOne({ _id: p.data._id }, { $push: { conexoes: id } });
+      console.log("logged in: ", email, id);
       return res.status(200).json({ hospede: p.data });
 
     case "funcionario":
       await db.Funcionario.updateOne({ _id: p.data._id }, { $push: { conexoes: id } });
+      console.log("logged in: ", email, id);
       return res.status(200).json({ funcionario: p.data });
 
     default:
@@ -42,13 +45,16 @@ const garagem = async (req, res) => {
     return res.status(400).send({ error: "Missing information" });
 
   var carro = await db.Carro.findOne({ placa: placa });
-  if (carro == null ) return res.status(404).send({ error: "carro não cadastrado" });
+  if (carro == null) return res.status(404).send({ error: "carro não cadastrado" });
 
   var p = await getPeople({ carros: carro });
-  if (p == null) return res.status(404).send({ error: "dono do carro não encontrado"});
+  if (p == null) return res.status(404).send({ error: "dono do carro não encontrado" });
 
-  var log = await logCarro({status: status});
+  var log = await logCarro({ status: status });
   await db.Carro.updateOne({ _id: carro._id }, { $push: { registros: log } });
+
+  if (p.data.conexoes != null && p.data.conexoes.length > 0)
+    p.data.conexoes.forEach((id) => sendToClient(id, (JSON.stringify(log))));
 
   return res.status(200).send(log);
 };
