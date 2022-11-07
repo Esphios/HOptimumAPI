@@ -36,12 +36,14 @@ const authenticate = async (req, res) => {
 
         case "hospede":
             var log = await logQuarto({ cartao: card, reserva: p.data });
+            await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
             const conexoes = getConexoesFromReserva(p.data)
             conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
             return res.status(200).json({ reserva: p.data });
 
         case "funcionario":
             var log = await logQuarto({ cartao: card, funcionario: p.data });
+            await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
             p.data.conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
             return res.status(200).json({ funcionario: p.data });
 
