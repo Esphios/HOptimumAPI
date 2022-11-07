@@ -24,20 +24,12 @@ const authenticate = async (req, res) => {
 
     var p = await getPeopleESP({ quarto: quarto, cartoesChave: card });
 
-    const getConexoesFromReserva = (reserva) => {
-        var conexoes = [];
-        reserva.hospedes.forEach( (h) => {
-            conexoes.push(...h.hospede.conexoes );
-        })
-        return conexoes;
-    }
-
     switch (p.type) {
 
         case "hospede":
             var log = await logQuarto({ cartao: card, reserva: p.data });
             await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
-            const conexoes = getConexoesFromReserva(p.data)
+            const conexoes = p.data.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
             conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
             return res.status(200).json({ reserva: p.data });
 

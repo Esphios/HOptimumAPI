@@ -33,7 +33,12 @@ const addCargos = async function () {
     salarioBase: 1500,
   });
 
-  return [cargo1, cargo2];
+  var cargo3 = await createCargo({
+    nome: "cozinha",
+    salarioBase: 1750,
+  });
+
+  return [cargo1, cargo2, cargo3];
 };
 
 const addHospedes = async function () {
@@ -133,7 +138,17 @@ const addFuncionarios = async function () {
     cargo: cargos[1]
   });
 
-  return [func1, func2];
+  var func3 = await createFuncionario({
+    nome: "Func #3",
+    cpf: "5678",
+    email: "func3@gmail.com",
+    telefone: "33333333333",
+    nascimento: "03-03-1933",
+    senha: "1234",
+    cargo: cargos[2]
+  });
+
+  return [func1, func2, func3];
 };
 
 const addServicos = async function () {
