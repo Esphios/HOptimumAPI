@@ -20,6 +20,8 @@ const {
   pushCartaoChaveToReserva,
   pushCartaoChaveToFunc,
   dropCollection,
+  resetHospedeConnections,
+  resetFuncionarioConnections,
 } = require("./utilsDB");
 
 const addCargos = async function () {
@@ -261,4 +263,10 @@ const dropAll = async function () {
   }
 };
 
-module.exports = { run, dropAll };
+const resetAllConnections = async function () {
+  await resetHospedeConnections({});
+  await resetFuncionarioConnections({});
+};
+
+
+module.exports = { run, resetAllConnections, dropAll };

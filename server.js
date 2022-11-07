@@ -19,6 +19,7 @@ mongoose.connect(
       "MongoDB Connection -- Ready state is:",
       mongoose.connection.readyState
     );
+    script.resetAllConnections();
     // script.run();
   }
 );

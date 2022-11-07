@@ -264,6 +264,19 @@ const dropCollection = function (collection) {
   });
 };
 
+const resetHospedeConnections = async function (hospede) {
+  db.Hospede.updateMany(hospede, { $set: { conexoes: [] }}, function(err, affected){
+    if (err) console.log('error: ', err);
+    console.log(`${affected.modifiedCount} hospedes tiveram suas conexões resetadas com sucesso!`);
+});
+}
+const resetFuncionarioConnections = async function (funcionario) {
+  db.Funcionario.updateMany(funcionario, { $set: { conexoes: [] }}, function(err, affected){
+    if (err) console.log('error: ', err);
+    console.log(`${affected.modifiedCount} funcionarios tiveram suas conexões resetadas com sucesso!`);
+});
+}
+
 module.exports = {
   createCargo,
   createFuncionario,
@@ -289,4 +302,6 @@ module.exports = {
   pushCartaoChaveToFunc,
   pullCartaoChaveFromFunc,
   dropCollection,
+  resetHospedeConnections,
+  resetFuncionarioConnections
 };
