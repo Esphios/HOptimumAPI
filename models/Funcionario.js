@@ -33,6 +33,12 @@ const Funcionario = mongoose.model(
           ref: "CartaoChave",
         },
       ],
+      registros: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "LogQuarto",
+        },
+      ],
       cargo: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Cargo",

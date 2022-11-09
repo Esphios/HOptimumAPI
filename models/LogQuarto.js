@@ -15,6 +15,10 @@ const LogQuarto = mongoose.model(
         type: mongoose.Schema.Types.ObjectId,
         ref: "CartaoChave",
       },
+      quarto: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Quarto",
+      },
     },
     { timestamps: { currentTime: Date.now }}
   )
