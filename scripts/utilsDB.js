@@ -117,6 +117,8 @@ const getFuncionarioWithPopulate = function (func) {
 
 const getReservaWithPopulate = async function (reserva) {
   let _reserva = await db.Reserva.findOne(reserva)
+
+  return await db.Reserva.findOne(reserva)
     .populate("cartoesChave")
     .populate({
       path: "hospedes",
@@ -130,22 +132,31 @@ const getReservaWithPopulate = async function (reserva) {
           },
         },
       },
+    })
+    .populate({
+      path: "quarto",
+      populate: {
+        path: "registros",
+        match: { createdAt: { $gte: _reserva.checkIn, $lte: _reserva.checkOut } }
+      },
     });
-
-  await _reserva.populate({
-    path: "quarto",
-    populate: {
-      path: "registros",
-      match: { createdAt: { $gte: _reserva.checkIn, $lte: _reserva.checkOut } }
-    },
-  });
-
-  return _reserva;
 };
 
 
 const getHospedeWithPopulate = async function (pessoa) {
   let _hospede = await db.Hospede.findOne(pessoa)
+    .select("-senha")
+    .populate({
+      path: "reservas",
+      populate: {
+        path: "reserva",
+        populate: {
+          path: "quarto"
+        },
+      },
+    });
+
+  return await db.Hospede.findOne(pessoa)
     .select("-senha")
     .populate({
       path: "reservas",
@@ -161,22 +172,11 @@ const getHospedeWithPopulate = async function (pessoa) {
       },
     })
     .populate({
-      path: "reservas",
-      populate: {
-        path: "reserva",
-        populate: {
-          path: "quarto"
-        },
-      },
-    })
-    .populate({
       path: "carros",
       populate: {
         path: "registros",
       },
-    });
-
-  await _hospede
+    })
     .populate({
       path: "reservas",
       populate: {
@@ -190,8 +190,6 @@ const getHospedeWithPopulate = async function (pessoa) {
         },
       },
     });
-
-  return _hospede;
 };
 
 const getPeople = async function (data) {
