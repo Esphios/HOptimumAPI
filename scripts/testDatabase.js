@@ -89,14 +89,14 @@ const addHospedes = async function () {
 
 const addReservas = async function (quartos) {
   reserva1 = await createReserva({
-    checkIn: new Date('2022-11-08'),
-    checkOut: new Date('2022-12-01'),
+    checkIn: new Date('2022-11-08T08:00:00.000-03:00'),
+    checkOut: new Date('2022-12-08T18:00:00.000-03:00'),
     quarto: quartos[0],
   });
 
   reserva2 = await createReserva({
-    checkIn: new Date('2022-11-08'),
-    checkOut: new Date('2022-12-08'),
+    checkIn: new Date('2022-11-08T08:00:00.000-03:00'),
+    checkOut: new Date('2023-01-28T18:00:00.000-03:00'),
     quarto: quartos[1],
   });
 
@@ -179,7 +179,7 @@ const addQuartos = async function () {
     macAddressEsp: "58:BF:25:33:3B:DC",
     maxOcupantes: 5,
     precoBase: 500,
-    ocupado: false,
+    ocupado: true,
   });
 
   var quarto2 = await createQuarto({
@@ -188,7 +188,7 @@ const addQuartos = async function () {
     macAddressEsp: "EC:62:60:83:ED:54",
     maxOcupantes: 2,
     precoBase: 150,
-    ocupado: false,
+    ocupado: true,
   });
 
   var quarto3 = await createQuarto({

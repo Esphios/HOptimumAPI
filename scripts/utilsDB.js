@@ -115,8 +115,8 @@ const getFuncionarioWithPopulate = function (func) {
     });
 };
 
-const getReservaWithPopulate = function (reserva) {
-  return db.Reserva.findOne(reserva)
+const getReservaWithPopulate = async function (reserva) {
+  let _reserva = await db.Reserva.findOne(reserva)
     .populate("cartoesChave")
     .populate({
       path: "hospedes",
@@ -130,18 +130,22 @@ const getReservaWithPopulate = function (reserva) {
           },
         },
       },
-    })
-    .populate ({
-      path: "quarto",
-      populate: {
-        path: "registros",
-      },
-    })
+    });
+
+  await _reserva.populate({
+    path: "quarto",
+    populate: {
+      path: "registros",
+      match: { createdAt: { $gte: _reserva.checkIn, $lte: _reserva.checkOut } }
+    },
+  });
+
+  return _reserva;
 };
 
 
-const getHospedeWithPopulate = function (pessoa) {
-  return db.Hospede.findOne(pessoa)
+const getHospedeWithPopulate = async function (pessoa) {
+  let _hospede = await db.Hospede.findOne(pessoa)
     .select("-senha")
     .populate({
       path: "reservas",
@@ -161,10 +165,7 @@ const getHospedeWithPopulate = function (pessoa) {
       populate: {
         path: "reserva",
         populate: {
-          path: "quarto",
-          populate: {
-            path: "registros",
-          },
+          path: "quarto"
         },
       },
     })
@@ -174,6 +175,23 @@ const getHospedeWithPopulate = function (pessoa) {
         path: "registros",
       },
     });
+
+  await _hospede
+    .populate({
+      path: "reservas",
+      populate: {
+        path: "reserva",
+        populate: {
+          path: "quarto",
+          populate: {
+            path: "registros",
+            match: { createdAt: { $gte: _hospede.reservas[0].reserva.checkIn, $lte: _hospede.reservas[0].reserva.checkOut } }
+          },
+        },
+      },
+    });
+
+  return _hospede;
 };
 
 const getPeople = async function (data) {
@@ -272,16 +290,16 @@ const dropCollection = function (collection) {
 };
 
 const resetHospedeConnections = async function (hospede) {
-  db.Hospede.updateMany(hospede, { $set: { conexoes: [] }}, function(err, affected){
+  db.Hospede.updateMany(hospede, { $set: { conexoes: [] } }, function (err, affected) {
     if (err) console.log('error: ', err);
     console.log(`${affected.modifiedCount} hospedes tiveram suas conexões resetadas com sucesso!`);
-});
+  });
 }
 const resetFuncionarioConnections = async function (funcionario) {
-  db.Funcionario.updateMany(funcionario, { $set: { conexoes: [] }}, function(err, affected){
+  db.Funcionario.updateMany(funcionario, { $set: { conexoes: [] } }, function (err, affected) {
     if (err) console.log('error: ', err);
     console.log(`${affected.modifiedCount} funcionarios tiveram suas conexões resetadas com sucesso!`);
-});
+  });
 }
 
 module.exports = {
