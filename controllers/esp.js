@@ -38,9 +38,11 @@ const authenticate = async (req, res) => {
             await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
             await db.Funcionario.updateOne({ _id: p.data._id }, { $push: { registros: log } });
 
-            var reserva = await getReserva({quarto: quarto, checkIn: {$lte: Date.now()}, checkOut: {$gte: Date.now()}})
-            var conn = reserva.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
-            conn.forEach((c) => sendToClient(c, JSON.stringify(log)));
+            var reserva = await getReserva({ quarto: quarto, checkIn: { $lte: Date.now() }, checkOut: { $gte: Date.now() } })
+            if (reserva != null) {
+                var conn = reserva.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
+                conn.forEach((c) => sendToClient(c, JSON.stringify(log)));
+            }
             p.data.conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
             return res.status(200).json({ funcionario: p.data });
 

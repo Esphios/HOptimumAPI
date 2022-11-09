@@ -118,7 +118,7 @@ const getFuncionarioWithPopulate = function (func) {
 const getReservaWithPopulate = async function (reserva) {
   let _reserva = await db.Reserva.findOne(reserva)
 
-  return await db.Reserva.findOne(reserva)
+  return _reserva != null ? await db.Reserva.findOne(reserva)
     .populate("cartoesChave")
     .populate({
       path: "hospedes",
@@ -139,7 +139,7 @@ const getReservaWithPopulate = async function (reserva) {
         path: "registros",
         match: { createdAt: { $gte: _reserva.checkIn, $lte: _reserva.checkOut } }
       },
-    });
+    }) : null
 };
 
 
@@ -156,7 +156,7 @@ const getHospedeWithPopulate = async function (pessoa) {
       },
     });
 
-  return await db.Hospede.findOne(pessoa)
+  return _hospede != null ? await db.Hospede.findOne(pessoa)
     .select("-senha")
     .populate({
       path: "reservas",
@@ -189,7 +189,7 @@ const getHospedeWithPopulate = async function (pessoa) {
           },
         },
       },
-    });
+    }) : null;
 };
 
 const getPeople = async function (data) {
