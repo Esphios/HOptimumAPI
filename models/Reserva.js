@@ -3,6 +3,8 @@ const Reserva = mongoose.model(
   "Reserva",
   new mongoose.Schema(
     {
+      checkIn: Date,
+      checkOut: Date,
       status: {
         type: String,
         enum: ["ATIVA", "FINALIZADA", "CANCELADA"],

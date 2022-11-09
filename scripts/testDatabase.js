@@ -88,11 +88,19 @@ const addHospedes = async function () {
 };
 
 const addReservas = async function (quartos) {
-  return await Promise.all(quartos.map(async (quarto) => {
-    return await createReserva({
-      quarto: quarto,
-    });
-  }));
+  reserva1 = await createReserva({
+    checkIn: new Date('2022-11-08'),
+    checkOut: new Date('2022-12-01'),
+    quarto: quartos[0],
+  });
+
+  reserva2 = await createReserva({
+    checkIn: new Date('2022-11-08'),
+    checkOut: new Date('2022-12-08'),
+    quarto: quartos[1],
+  });
+
+  return [reserva1, reserva2]
 };
 
 const addCarros = async function () {
