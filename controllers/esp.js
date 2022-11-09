@@ -14,7 +14,7 @@ const authenticate = async (req, res) => {
         return res.status(400).send({ error: "Missing information" });
 
 
-    var quarto = await db.Quarto.findOne({ macAddressEsp: mac });
+    var quarto = await db.Quarto.findOne({ macAddressEsp: mac }, '-registros');
     if (quarto == null)
         return res.status(404).send({ error: "Mac address não encontrado no cadastro." });
 
