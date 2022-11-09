@@ -93,6 +93,7 @@ const getFuncionarioWithPopulate = function (func) {
   return db.Funcionario.findOne(func)
     .select("-senha")
     .populate("cartoesChave")
+    .populate("registros")
     .populate("cargo")
     .populate({
       path: "servicos",
