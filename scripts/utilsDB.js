@@ -316,6 +316,7 @@ module.exports = {
   getPeople,
   getPeopleESP,
   getHospedeWithPopulate,
+  getReservaWithPopulate,
   getFuncionarioWithPopulate,
   getServicoWithPopulate,
   pushCarroToHospede,
