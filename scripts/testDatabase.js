@@ -99,19 +99,19 @@ const addCarros = async function () {
   var carro1 = await createCarro({
     cor: "preto",
     modelo: "fuscão",
-    placa: "FPE2324",
+    placa: "OTM2022",
   });
 
   var carro2 = await createCarro({
     cor: "verde",
     modelo: "gol bolinha",
-    placa: "BRA2E19",
+    placa: "HQW5678",
   });
 
   var carro3 = await createCarro({
     cor: "prata",
     modelo: "tesla S",
-    placa: "BRA2E55",
+    placa: "BRA2E19",
   });
 
   return [carro1, carro2, carro3];
@@ -200,9 +200,8 @@ const addCartoes = async function () {
   var card2 = await createCartaoChave(" DA 5B BE 15");
   var card3 = await createCartaoChave(" BA 66 67 15");
   var card4 = await createCartaoChave(" 4B DF AC 1C");
-  var card5 = await createCartaoChave(" 0B 51 94 1C");
-  var card6 = await createCartaoChave(" 0A 85 7F 15");
-
+  var card5 = await createCartaoChave(" 0A 85 7F 15");
+  var card6 = await createCartaoChave(" 0B 51 94 1C");
   return [card1, card2, card3, card4, card5, card6];
 };
 
@@ -239,13 +238,13 @@ const run = async function () {
   t3 = await pushCartaoChaveToReserva(reservas[0]._id, cards[2]);
   t4 = await pushCartaoChaveToReserva(reservas[0]._id, cards[3]);
   t5 = await pushCartaoChaveToFunc(func[1]._id, cards[4]);
-  t6 = await pushCartaoChaveToReserva(reservas[1]._id, cards[6]);
+  t6 = await pushCartaoChaveToReserva(reservas[1]._id, cards[5]);
 
   var carros = await addCarros();
 
   c1 = await pushCarroToFunc(func[0]._id, carros[0]);
-  c1 = await pushCarroToFunc(func[1]._id, carros[1]);
-  c2 = await pushCarroToHospede(hospedes[0]._id, carros[2]);
+  c2 = await pushCarroToFunc(func[1]._id, carros[1]);
+  c3 = await pushCarroToHospede(hospedes[0]._id, carros[2]);
 
 
   funcionario = await getFuncionarioWithPopulate({ _id: func[0]._id });

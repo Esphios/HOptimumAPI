@@ -50,7 +50,7 @@ const garagem = async (req, res) => {
   var p = await getPeople({ carros: carro });
   if (p == null) return res.status(404).send({ error: "dono do carro não encontrado" });
 
-  var log = await logCarro({ status: status });
+  var log = await logCarro({ status: status, carro: carro });
   await db.Carro.updateOne({ _id: carro._id }, { $push: { registros: log } });
 
   if (p.data.conexoes != null && p.data.conexoes.length > 0)

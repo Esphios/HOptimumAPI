@@ -4,8 +4,12 @@ const LogCarro = mongoose.model(
   new mongoose.Schema(
     {
       status: { type: String, required: true },
+      carro: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Carro",
+      }
     },
-    { timestamps: { currentTime: Date.now }}
+    { timestamps: { currentTime: Date.now } }
   )
 );
 module.exports = LogCarro;
