@@ -3,7 +3,7 @@ module.exports = {
   Carro: require("./Carro"),
   CartaoChave: require("./CartaoChave"),
   Funcionario: require("./Funcionario"),
-  FuncionarioServico: require("./FuncionarioServico"),
+  ReservaServico: require("./ReservaServico"),
   Hospede: require("./Hospede"),
   HospedeReserva: require("./HospedeReserva"),
   LogCarro: require("./LogCarro"),

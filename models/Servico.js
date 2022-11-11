@@ -4,11 +4,13 @@ const Servico = mongoose.model(
   new mongoose.Schema(
     {
       nome: { type: String, required: true },
-      status: String,
-      funcionarios: [
+      tipo: { type: String, required: true },
+      preco: Number,
+      imgUrl: String,
+      reservas: [
         {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "FuncionarioServico",
+          ref: "ReservaServico",
         },
       ],
     },

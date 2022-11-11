@@ -18,7 +18,7 @@ const Reserva = mongoose.model(
       servicos: [
         {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "Servico",
+          ref: "ReservaServico",
         }
       ],
       hospedes: [

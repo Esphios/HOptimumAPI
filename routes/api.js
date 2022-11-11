@@ -13,5 +13,6 @@ router.delete('/api', apiController.deleteAllObj);
 router.post('/api/auth', apiController.authenticate);
 router.post('/api/login', apiController.login);
 router.post('/api/garagem', apiController.garagem);
+router.post('/api/statusservico', apiController.statusServico);
 
 module.exports = router;

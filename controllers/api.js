@@ -1,5 +1,5 @@
 // const path = require('path');
-const { getPeople, createLogCarro: logCarro } = require("../scripts/utilsDB.js");
+const { getPeople, createLogCarro: logCarro, getReservaWithPopulate: getReserva } = require("../scripts/utilsDB.js");
 const db = require("../models");
 const { sendToClient } = require("./websocket.js");
 
@@ -59,6 +59,28 @@ const garagem = async (req, res) => {
   return res.status(200).send(log);
 };
 
+
+
+//POST '/api/statusservico'
+const statusServico = async (req, res) => {
+  const id = req.body.id;
+  const status = req.body.status;
+
+  if (!isValid(id) || !isValid(status))
+    return res.status(400).send({ error: "Missing information" });
+
+  var rs = await db.ReservaServico.findByIdAndUpdate( id, { status: status }, {new: true} );
+  if (rs == null) return res.status(404).send({ error: "Serviço não encontrado" });
+[]
+  var reserva = await getReserva( {_id: rs.reservaId} );
+  if (reserva != null) {
+      var conn = reserva.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
+      conn.forEach((c) => sendToClient(c, JSON.stringify(rs)));
+  }
+
+  return res.status(200).send();
+};
+
 //GET '/api'
 const getAllObj = (req, res, next) => {
   // res.json({message: "GET all api"});
@@ -94,6 +116,7 @@ const deleteOneObj = (req, res, next) => {
 module.exports = {
   login,
   garagem,
+  statusServico,
   getAllObj,
   newObj,
   deleteAllObj,

@@ -11,7 +11,7 @@ const {
   createQuarto,
   // createLogQuarto,
   createCartaoChave,
-  addFuncionarioServico,
+  addReservaServico,
   addHospedeReserva,
   getFuncionarioWithPopulate,
   getServicoWithPopulate,
@@ -162,14 +162,83 @@ const addFuncionarios = async function () {
 };
 
 const addServicos = async function () {
-  var servicoA = await createServico({
-    nome: "servicoA",
-  });
-  var servicoB = await createServico({
-    nome: "servicoB",
-  });
+  const servicos = [
+    {
+      nome: 'Serviço de quarto',
+      tipo: 'Serviço de quarto',
+      imageUrl:
+        'https://cdn.sanity.io/images/tbvc1g2x/production/e48f7be484d6838b1812cbebcbbcf068b8581bfc-1600x1067.jpg?w=1600&h=1067&auto=format',
+      espera: 30,
+      preco: 15.00,
+    },
+    {
+      nome: 'Iogurte com cereais e frutas',
+      tipo: 'Café da Manhã',
+      imageUrl:
+        'https://images.unsplash.com/photo-1581559178851-b99664da71ba?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=386&q=80',
+      espera: 20,
+      preco: 10.00,
+    },
+    {
+      nome: 'Torrada e ovo frito',
+      tipo: 'Café da Manhã',
+      imageUrl:
+        'https://images.unsplash.com/photo-1525351484163-7529414344d8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&q=80',
+      espera: 25,
+      preco: 12.00,
+    },
+    {
+      nome: 'Carne assada com vegetais',
+      tipo: 'Almoço',
+      imageUrl:
+        'https://images.unsplash.com/photo-1573225342350-16731dd9bf3d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=762&q=80',
+      espera: 60,
+      preco: 30.00,
+    },
+    {
+      nome: 'Pizza de quatro quejos',
+      tipo: 'Lanche',
+      imageUrl:
+        'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80',
+      espera: 60,
+      preco: 40.00,
+    },
+    {
+      nome: 'Spaghetti com Molho de Tomate',
+      tipo: 'Almoço',
+      imageUrl:
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg/800px-Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg',
+      espera: 40,
+      preco: 35.00,
+    },
+    {
+      nome: 'Hamburguer clássico',
+      tipo: 'Lanche',
+      imageUrl:
+        'https://cdn.pixabay.com/photo/2014/10/23/18/05/burger-500054_1280.jpg',
+      espera: 45,
+      preco: 15.00,
+    },
+    {
+      nome: 'Mousse de Laranja',
+      tipo: 'Sobremesa',
+      imageUrl:
+        'https://cdn.pixabay.com/photo/2017/05/01/05/18/pastry-2274750_1280.jpg',
+      espera: 40,
+      preco: 15.00,
+    },
+    {
+      nome: 'Suflê de Chocolate',
+      tipo: 'Sobremesa',
+      imageUrl:
+        'https://cdn.pixabay.com/photo/2014/08/07/21/07/souffle-412785_1280.jpg',
+      espera: 30,
+      preco: 15.00,
+    }];
 
-  return [servicoA, servicoB];
+  return await Promise.all(servicos.map(async (s) => {
+    return await createServico(s);
+  }));
 };
 
 const addQuartos = async function () {
@@ -219,26 +288,31 @@ const run = async function () {
   var cards = await addCartoes();
 
   var func = await addFuncionarios();
-  var serv = await addServicos();
+  var servicos = await addServicos();
 
   var hospedes = await addHospedes();
   var reservas = await addReservas([quartos[0], quartos[1]]);
 
-  var fs00 = await addFuncionarioServico(func[0]._id, serv[0]._id);
-  // console.log("\n>> fs1a:\n", fs00);
-  var fs01 = await addFuncionarioServico(func[0]._id, serv[1]._id);
-  // console.log("\n>> fs1b:\n", fs01);
-  var fs11 = await addFuncionarioServico(func[1]._id, serv[1]._id);
-  // console.log("\n>> fs2b:\n", fs11);
+  // var fs00 = await addFuncionarioServico(func[0]._id, serv[0]._id);
+  // // console.log("\n>> fs1a:\n", fs00);
+  // var fs01 = await addFuncionarioServico(func[0]._id, serv[1]._id);
+  // // console.log("\n>> fs1b:\n", fs01);
+  // var fs11 = await addFuncionarioServico(func[1]._id, serv[1]._id);
+  // // console.log("\n>> fs2b:\n", fs11);
 
+  var rs1 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[1])
+  var rs2 = await addReservaServico(reservas[0]._id, servicos[1]._id, func[2])
+  var rs3 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
+  var rs4 = await addReservaServico(reservas[0]._id, servicos[3]._id, func[2])
+  var rs5 = await addReservaServico(reservas[1]._id, servicos[0]._id, func[2])
 
   var hr00 = await addHospedeReserva(hospedes[0]._id, reservas[0]._id);
   // console.log("\n>> hr00:\n", hr00);
   var hr11 = await addHospedeReserva(hospedes[1]._id, reservas[1]._id);
   // console.log("\n>> hr11:\n", hr11);
-  var hr20 = await addHospedeReserva(hospedes[2]._id, reservas[0]._id, titular=false);
+  var hr20 = await addHospedeReserva(hospedes[2]._id, reservas[0]._id, titular = false);
   // console.log("\n>> hr20:\n", hr20);
-  var hr30 = await addHospedeReserva(hospedes[3]._id, reservas[0]._id, titular=false);
+  var hr30 = await addHospedeReserva(hospedes[3]._id, reservas[0]._id, titular = false);
   // console.log("\n>> hr30:\n", hr30);
 
   t1 = await pushCartaoChaveToFunc(func[0]._id, cards[0]);
@@ -258,8 +332,8 @@ const run = async function () {
   funcionario = await getFuncionarioWithPopulate({ _id: func[0]._id });
   console.log("\n>> populated func1:\n", funcionario);
 
-  servico = await getServicoWithPopulate(serv[1]._id);
-  console.log("\n>> populated servicoB:\n", servico);
+  // servico = await getServicoWithPopulate(serv[1]._id);
+  // console.log("\n>> populated servicoB:\n", servico);
 };
 
 const dropAll = async function () {

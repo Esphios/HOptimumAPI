@@ -18,7 +18,7 @@ const Funcionario = mongoose.model(
       servicos: [
         {
           type: mongoose.Schema.Types.ObjectId,
-          ref: "FuncionarioServico",
+          ref: "ReservaServico",
         },
       ],
       carros: [

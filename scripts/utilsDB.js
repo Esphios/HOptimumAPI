@@ -50,20 +50,24 @@ const createReserva = function (reserva) {
   });
 };
 
-const addFuncionarioServico = async function (funcionarioId, servicoId) {
-  var doc = await db.FuncionarioServico.create({
+const addReservaServico = async function (reservaId, servicoId, funcionario) {
+  var doc = await db.ReservaServico.create({
     servicoId: servicoId,
-    funcionarioId: funcionarioId,
+    reservaId: reservaId,
+    funcionario: funcionario
   }).then((doc) => {
-    console.log("\n>> Created FuncionarioServico:\n", doc);
+    console.log("\n>> Created ReservaServico:\n", doc);
     return doc;
   });
 
-  await db.Funcionario.findByIdAndUpdate(funcionarioId, {
+  await db.Reserva.findByIdAndUpdate(reservaId, {
     $push: { servicos: doc._id },
   });
   await db.Servico.findByIdAndUpdate(servicoId, {
-    $push: { funcionarios: doc._id },
+    $push: { reservas: doc._id },
+  });
+  await db.Funcionario.findByIdAndUpdate(funcionario._id, {
+    $push: { reservas: doc._id },
   });
 
   return doc;
@@ -93,18 +97,13 @@ const getFuncionarioWithPopulate = function (func) {
   return db.Funcionario.findOne(func)
     .select("-senha")
     .populate("cartoesChave")
+    .populate("servicos")
     .populate("cargo")
     .populate({
       path: "registros",
       populate: {
         path: "quarto",
         select: "nome numero"
-      },
-    })
-    .populate({
-      path: "servicos",
-      populate: {
-        path: "servico",
       },
     })
     .populate({
@@ -134,6 +133,12 @@ const getReservaWithPopulate = async function (reserva) {
       },
     })
     .populate({
+      path: "servicos",
+      populate: {
+        path: "servico",
+      },
+    })
+    .populate({
       path: "quarto",
       populate: {
         path: "registros",
@@ -158,6 +163,32 @@ const getHospedeWithPopulate = async function (pessoa) {
 
   return _hospede != null ? await db.Hospede.findOne(pessoa)
     .select("-senha")
+    .populate({
+      path: "reservas",
+      populate: {
+        path: "reserva",
+        populate: {
+          path: "servicos",
+          populate: {
+            path: "servico",
+            select: "-reservas",
+          },
+        },
+      },
+    })
+    .populate({
+      path: "reservas",
+      populate: {
+        path: "reserva",
+        populate: {
+          path: "servicos",
+          populate: {
+            path: "funcionario",
+            select: "nome cpf",
+          },
+        },
+      },
+    })
     .populate({
       path: "reservas",
       populate: {
@@ -311,7 +342,7 @@ module.exports = {
   createQuarto,
   createLogQuarto,
   createCartaoChave,
-  addFuncionarioServico,
+  addReservaServico,
   addHospedeReserva,
   getPeople,
   getPeopleESP,
