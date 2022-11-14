@@ -169,6 +169,7 @@ const deleteOneObj = (req, res, next) => {
 module.exports = {
   login,
   garagem,
+  cadastro,
   statusServico,
   getAllObj,
   newObj,
