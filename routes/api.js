@@ -12,6 +12,7 @@ router.delete('/api', apiController.deleteAllObj);
 
 router.post('/api/auth', apiController.authenticate);
 router.post('/api/login', apiController.login);
+router.post('/api/cadastro', apiController.cadastro);
 router.post('/api/garagem', apiController.garagem);
 router.post('/api/statusservico', apiController.statusServico);
 

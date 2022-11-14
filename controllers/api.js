@@ -1,5 +1,11 @@
 // const path = require('path');
-const { getPeople, createLogCarro: logCarro, getReservaWithPopulate: getReserva } = require("../scripts/utilsDB.js");
+const {
+  getPeople,
+  createHospede,
+  createFuncionario,
+  createLogCarro: logCarro,
+  getReservaWithPopulate: getReserva,
+} = require("../scripts/utilsDB.js");
 const db = require("../models");
 const { sendToClient } = require("./websocket.js");
 
@@ -69,16 +75,63 @@ const statusServico = async (req, res) => {
   if (!isValid(id) || !isValid(status))
     return res.status(400).send({ error: "Missing information" });
 
-  var rs = await db.ReservaServico.findByIdAndUpdate( id, { status: status }, {new: true} );
+  var rs = await db.ReservaServico.findByIdAndUpdate(id, { status: status }, { new: true });
   if (rs == null) return res.status(404).send({ error: "Serviço não encontrado" });
-[]
-  var reserva = await getReserva( {_id: rs.reservaId} );
+  []
+  var reserva = await getReserva({ _id: rs.reservaId });
   if (reserva != null) {
-      var conn = reserva.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
-      conn.forEach((c) => sendToClient(c, JSON.stringify(rs)));
+    var conn = reserva.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
+    conn.forEach((c) => sendToClient(c, JSON.stringify(rs)));
   }
 
-  return res.status(200).send();
+  return res.status(200).send(rs);
+};
+
+//POST '/api/cadastro'
+const cadastro = async (req, res) => {
+  const tipo = req.body.tipo;
+  let dados = {};
+
+  switch (tipo) {
+    case 'funcionario':
+      dados.cpf = req.body.cpf
+      dados.nome = req.body.nome
+      dados.email = req.body.email
+      dados.nascimento = req.body.nascimento
+      dados.senha = req.body.senha
+      dados.cargo = req.body.cargo
+
+      if (!Object.values(dados).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
+
+      dados.cargo = db.Cargos.findOne({ nome: dados.cargo })
+      if (dados.cargo == null) return res.status(404).send({ error: "Cargo não encontrado" })
+
+      // dados.carros = req.body.carros
+      dados.genero = req.body.genero
+      dados.telefone = req.body.telefone
+
+      let func = await createFuncionario(dados);
+      return res.status(200).send(func)
+
+    case 'hospede':
+      dados.cpf = req.body.cpf
+      dados.nome = req.body.nome
+      dados.email = req.body.email
+      dados.nascimento = req.body.nascimento
+      dados.senha = req.body.senha
+
+      if (!Object.values(dados).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
+
+      // dados.carros = req.body.carros
+      dados.genero = req.body.genero
+      dados.telefone = req.body.telefone
+
+      let hospede = await createHospede(dados);
+      return res.status(200).send(hospede)
+
+    default:
+      return res.status(400).send({ error: "Tipo de cadastro não especificado" })
+  }
 };
 
 //GET '/api'

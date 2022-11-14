@@ -14,10 +14,12 @@ const LogQuarto = mongoose.model(
       cartao: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "CartaoChave",
+        required: true
       },
       quarto: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Quarto",
+        required: true
       },
     },
     { timestamps: { currentTime: Date.now }}
