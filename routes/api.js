@@ -6,14 +6,20 @@ router.get('/api', apiController.getAllObj);
 router.post('/api', apiController.newObj);
 router.delete('/api', apiController.deleteAllObj);
 
+router.get('/api/servicos', apiController.servicos);
+router.get('/api/carro', apiController.getCarro);
+
 // router.get('/api/:name', apiController.getOneObj);
 // router.post('/api/:name', apiController.newComment);
 // router.delete('/api/:name', apiController.deleteOneObj);
 
-router.post('/api/auth', apiController.authenticate);
 router.post('/api/login', apiController.login);
 router.post('/api/cadastro', apiController.cadastro);
-router.post('/api/garagem', apiController.garagem);
 router.post('/api/statusservico', apiController.statusServico);
+router.post('/api/carro', apiController.addCarro);
+router.post('/api/servico', apiController.addServico);
+
+router.post('/api/garagem', apiController.garagem);
+router.post('/api/auth', apiController.authenticate);
 
 module.exports = router;

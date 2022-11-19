@@ -300,11 +300,11 @@ const run = async function () {
   // var fs11 = await addFuncionarioServico(func[1]._id, serv[1]._id);
   // // console.log("\n>> fs2b:\n", fs11);
 
-  var rs1 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[1])
-  var rs2 = await addReservaServico(reservas[0]._id, servicos[1]._id, func[2])
-  var rs3 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
-  var rs4 = await addReservaServico(reservas[0]._id, servicos[3]._id, func[2])
-  var rs5 = await addReservaServico(reservas[1]._id, servicos[0]._id, func[2])
+  var rs1 = await addReservaServico(reservas[0]._id, servicos[0]._id, func[1])
+  var rs2 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
+  var rs3 = await addReservaServico(reservas[0]._id, servicos[1]._id, func[2])
+  var rs4 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
+  var rs5 = await addReservaServico(reservas[1]._id, servicos[3]._id, func[2])
 
   var hr00 = await addHospedeReserva(hospedes[0]._id, reservas[0]._id);
   // console.log("\n>> hr00:\n", hr00);

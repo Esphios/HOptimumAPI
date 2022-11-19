@@ -67,7 +67,7 @@ const addReservaServico = async function (reservaId, servicoId, funcionario) {
     $push: { reservas: doc._id },
   });
   await db.Funcionario.findByIdAndUpdate(funcionario._id, {
-    $push: { reservas: doc._id },
+    $push: { servicos: doc._id },
   });
 
   return doc;
@@ -97,8 +97,13 @@ const getFuncionarioWithPopulate = function (func) {
   return db.Funcionario.findOne(func)
     .select("-senha")
     .populate("cartoesChave")
-    .populate("servicos")
     .populate("cargo")
+    .populate({
+      path: "servicos",
+      populate: {
+        path: "servico",
+      },
+    })
     .populate({
       path: "registros",
       populate: {
@@ -216,7 +221,7 @@ const getHospedeWithPopulate = async function (pessoa) {
           path: "quarto",
           populate: {
             path: "registros",
-            match: { createdAt: { $gte: _hospede.reservas[0].reserva.checkIn, $lte: _hospede.reservas[0].reserva.checkOut } }
+            match: { createdAt: _hospede.reservas.length > 0 ? { $gte: _hospede.reservas[0].reserva.checkIn, $lte: _hospede.reservas[0].reserva.checkOut } : null }
           },
         },
       },

@@ -3,8 +3,10 @@ const {
   getPeople,
   createHospede,
   createFuncionario,
+  createServico,
   createLogCarro: logCarro,
   getReservaWithPopulate: getReserva,
+  getServicoWithPopulate: getServico,
 } = require("../scripts/utilsDB.js");
 const db = require("../models");
 const { sendToClient } = require("./websocket.js");
@@ -103,7 +105,7 @@ const cadastro = async (req, res) => {
 
       if (!Object.values(dados).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
 
-      dados.cargo = db.Cargos.findOne({ nome: dados.cargo })
+      dados.cargo = await db.Cargo.findOne({ nome: dados.cargo })
       if (dados.cargo == null) return res.status(404).send({ error: "Cargo não encontrado" })
 
       // dados.carros = req.body.carros
@@ -133,6 +135,72 @@ const cadastro = async (req, res) => {
       return res.status(400).send({ error: "Tipo de cadastro não especificado" })
   }
 };
+
+//GET '/api/servicos'
+const servicos = async (req, res) => {
+  return res.status(200).send(await db.Servico.find({}))
+};
+
+//POST '/api/addcarro'
+const addCarro = async (req, res) => {
+  let carro = {
+    cor: req.body.cor,
+    modelo: req.body.modelo,
+    placa: req.body.placa,
+  };
+
+  if (!Object.values(carro).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
+
+  let test = await db.Carro.findOne({ placa: carro.placa })
+  if (test != null) return res.status(400).send({ error: "Placa já existe no sistema" })
+
+  let c = await createCarro(carro);
+  return res.status(200).send(c);
+};
+
+//POST '/api/getcarro'
+const getCarro = async (req, res) => {
+  let carro = {
+    cor: req.body.cor,
+    modelo: req.body.modelo,
+    placa: req.body.placa,
+  };
+
+  let c = await db.Carro.findOne(carro)
+  if (c == null) return res.status(404).send({ error: "Carro não encontrado" })
+
+  return res.status(200).send(c);
+};
+
+function random_item(items) {
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+//POST '/api/addservico'
+const addServico = async (req, res) => {
+  const idServico = req.body.idServico;
+  const idReserva = req.body.idReserva;
+
+  if (!isValid(idServico) || !isValid(idReserva))
+    return res.status(400).send({ error: "Missing information" });
+
+  let s = await getServico({_id: idServico});
+  let r = await getReserva({_id: idReserva});
+
+  if (s == null || r == null)
+    return res.status(404).send({ error: "Um ou mais itens não foram encontrados." });
+
+  if (s.tipo == "Serviço de quarto") {
+    let c = await sb.Cargo.find({nome: "limpeza"})
+  } else {
+    let c = await sb.Cargo.find({nome: "cozinha"})
+  }
+  let funcs = await db.Funcionario.find({cargo: c});
+  let doc = await addReservaServico(idReserva, idReserva, random_item(funcs));
+
+  return res.status(200).send(doc);
+};
+
 
 //GET '/api'
 const getAllObj = (req, res, next) => {
@@ -170,6 +238,7 @@ module.exports = {
   login,
   garagem,
   cadastro,
+  servicos,
   statusServico,
   getAllObj,
   newObj,
@@ -177,5 +246,8 @@ module.exports = {
   getOneObj,
   newComment,
   deleteOneObj,
+  addCarro,
+  getCarro,
+  addServico,
   authenticate: require("./esp").authenticate,
 };
