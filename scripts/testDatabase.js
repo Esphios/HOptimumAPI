@@ -197,7 +197,7 @@ const addServicos = async function () {
     },
     {
       nome: 'Pizza de quatro quejos',
-      tipo: 'Lanche',
+      tipo: 'Jantar',
       imageUrl:
         'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80',
       espera: 60,
@@ -213,7 +213,7 @@ const addServicos = async function () {
     },
     {
       nome: 'Hamburguer clássico',
-      tipo: 'Lanche',
+      tipo: 'Jantar',
       imageUrl:
         'https://cdn.pixabay.com/photo/2014/10/23/18/05/burger-500054_1280.jpg',
       espera: 45,
@@ -221,7 +221,7 @@ const addServicos = async function () {
     },
     {
       nome: 'Mousse de Laranja',
-      tipo: 'Sobremesa',
+      tipo: 'Almoço',
       imageUrl:
         'https://cdn.pixabay.com/photo/2017/05/01/05/18/pastry-2274750_1280.jpg',
       espera: 40,
@@ -229,7 +229,7 @@ const addServicos = async function () {
     },
     {
       nome: 'Suflê de Chocolate',
-      tipo: 'Sobremesa',
+      tipo: 'Jantar',
       imageUrl:
         'https://cdn.pixabay.com/photo/2014/08/07/21/07/souffle-412785_1280.jpg',
       espera: 30,

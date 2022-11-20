@@ -105,6 +105,17 @@ const getFuncionarioWithPopulate = function (func) {
       },
     })
     .populate({
+      path: "servicos",
+      populate: {
+        path: "reserva",
+        select : "quarto",
+        populate: {
+          path: "quarto",
+          select: "nome numero"
+        },
+      },
+    })
+    .populate({
       path: "registros",
       populate: {
         path: "quarto",
@@ -251,8 +262,10 @@ const getPeopleESP = async function (data) {
 const getServicoWithPopulate = function (id) {
   return db.Servico.findById(id).populate({
     path: "funcionarios",
+    strictPopulate: false,
     populate: {
       path: "funcionario",
+      strictPopulate: false,
     },
   });
 };

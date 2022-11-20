@@ -3,8 +3,11 @@ const {
   getPeople,
   createHospede,
   createFuncionario,
-  createServico,
+  createCarro,
+  addReservaServico,
   createLogCarro: logCarro,
+  pushCarroToFunc,
+  pushCarroToHospede,
   getReservaWithPopulate: getReserva,
   getServicoWithPopulate: getServico,
 } = require("../scripts/utilsDB.js");
@@ -113,6 +116,15 @@ const cadastro = async (req, res) => {
       dados.telefone = req.body.telefone
 
       let func = await createFuncionario(dados);
+
+      let cars = req.body.carros;
+
+      let carArray = await Promise.all(cars.map(async (id) => {
+        let carro = await db.Carro.findById(id)
+        if (carro == null) return null;
+        return await pushCarroToFunc(func._id, carro);
+      }));
+
       return res.status(200).send(func)
 
     case 'hospede':
@@ -124,12 +136,22 @@ const cadastro = async (req, res) => {
 
       if (!Object.values(dados).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
 
-      // dados.carros = req.body.carros
+      // let carro = await db.Carro.findOne({ placa: req.body.carro });
+
       dados.genero = req.body.genero
       dados.telefone = req.body.telefone
 
       let hospede = await createHospede(dados);
-      return res.status(200).send(hospede)
+
+      let carros = req.body.carros;
+
+      await Promise.all(carros.map(async (c) => {
+        let carro = await db.Carro.findOne({placa: c})
+        if (carro == null) return null;
+        return await pushCarroToHospede(hospede._id, carro);
+      }));
+
+      return res.status(200).send(hospede);
 
     default:
       return res.status(400).send({ error: "Tipo de cadastro não especificado" })
@@ -190,13 +212,14 @@ const addServico = async (req, res) => {
   if (s == null || r == null)
     return res.status(404).send({ error: "Um ou mais itens não foram encontrados." });
 
+  let c = null;
   if (s.tipo == "Serviço de quarto") {
-    let c = await sb.Cargo.find({nome: "limpeza"})
+    c = await db.Cargo.find({nome: "limpeza"})
   } else {
-    let c = await sb.Cargo.find({nome: "cozinha"})
+    c = await db.Cargo.find({nome: "cozinha"})
   }
   let funcs = await db.Funcionario.find({cargo: c});
-  let doc = await addReservaServico(idReserva, idReserva, random_item(funcs));
+  let doc = await addReservaServico(idReserva, idServico, random_item(funcs));
 
   return res.status(200).send(doc);
 };

@@ -20,7 +20,7 @@ mongoose.connect(
       mongoose.connection.readyState
     );
     script.resetAllConnections();
-    // script.run();
+    // script.run ();
   }
 );
 
