@@ -5,7 +5,9 @@ const {
   createFuncionario,
   createCarro,
   addReservaServico,
+  addHospedeReserva,
   createLogCarro: logCarro,
+  createReserva,
   pushCarroToFunc,
   pushCarroToHospede,
   getReservaWithPopulate: getReserva,
@@ -146,7 +148,7 @@ const cadastro = async (req, res) => {
       let carros = req.body.carros;
 
       await Promise.all(carros.map(async (c) => {
-        let carro = await db.Carro.findOne({placa: c})
+        let carro = await db.Carro.findOne({ placa: c })
         if (carro == null) return null;
         return await pushCarroToHospede(hospede._id, carro);
       }));
@@ -206,55 +208,100 @@ const addServico = async (req, res) => {
   if (!isValid(idServico) || !isValid(idReserva))
     return res.status(400).send({ error: "Missing information" });
 
-  let s = await getServico({_id: idServico});
-  let r = await getReserva({_id: idReserva});
+  let s = await getServico({ _id: idServico });
+  let r = await getReserva({ _id: idReserva });
 
   if (s == null || r == null)
     return res.status(404).send({ error: "Um ou mais itens não foram encontrados." });
 
   let c = null;
   if (s.tipo == "Serviço de quarto") {
-    c = await db.Cargo.find({nome: "limpeza"})
+    c = await db.Cargo.find({ nome: "limpeza" })
   } else {
-    c = await db.Cargo.find({nome: "cozinha"})
+    c = await db.Cargo.find({ nome: "cozinha" })
   }
-  let funcs = await db.Funcionario.find({cargo: c});
+  let funcs = await db.Funcionario.find({ cargo: c });
   let doc = await addReservaServico(idReserva, idServico, random_item(funcs));
 
   return res.status(200).send(doc);
 };
 
+const getQuartos = async (req, res) => {
+  let quartos = await db.Quarto.find({});
+  return res.status(200).send(quartos);
+}
 
-//GET '/api'
-const getAllObj = (req, res, next) => {
-  // res.json({message: "GET all api"});
-  res.json({ message: "FUNCIONA POHA" });
-};
+const checkReserva = async (req, res) => {
+  let reserva = {
+    checkIn: req.body.checkIn,
+    checkOut: req.body.checkOut,
+    quarto: req.body.quarto
+  }
+  if (!Object.values(reserva).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" });
 
-//POST '/api'
-const newObj = (req, res, next) => {
-  res.json({ message: `Cê mandou isso aqui: ${JSON.stringify(req.body)}` });
-};
+  reserva.checkIn = new Date(reserva.checkIn);
+  reserva.checkOut = new Date(reserva.checkOut);
 
-//DELETE '/api'
-const deleteAllObj = (req, res, next) => {
-  res.json({ message: "DELETE all api" });
-};
+  reserva.quarto = await db.Quarto.findById(req.body.quarto);
+  if (reserva.quarto == null) return res.status(404).send({ error: "Quarto não encontrado" });
 
-//GET '/api/:name'
-const getOneObj = (req, res, next) => {
-  res.json({ message: "GET 1 api" });
-};
+  let occupies = await db.Reserva.findOne({
+    $or: [
+      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkIn }, checkOut: { $gte: reserva.checkIn } },
+      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkOut }, checkOut: { $gte: reserva.checkOut } },
+      { quarto: reserva.quarto, checkIn: { $gt: reserva.checkIn }, checkOut: { $lt: reserva.checkOut } }
+    ]
+  });
 
-//POST '/api/:name'
-const newComment = (req, res, next) => {
-  res.json({ message: "POST 1 api comment" });
-};
+  if (occupies == null) return res.status(200).send(reserva);
+  return res.status(406).send({ error: "Reserva inválida" });
 
-//DELETE '/api/:name'
-const deleteOneObj = (req, res, next) => {
-  res.json({ message: "DELETE 1 api" });
-};
+}
+
+const checkHospede = async (req, res) => {
+  let hospede = await db.Hospede.findOne({ cpf: req.body.cpf }, "nome");
+
+  if (hospede == null) return res.status(404).send({ error: "Pessoa não encontrada" });
+  return res.status(200).send(hospede);
+
+}
+
+const addReserva = async (req, res) => {
+  let reserva = {
+    checkIn: req.body.checkIn,
+    checkOut: req.body.checkOut,
+    quarto: req.body.quarto
+  }
+  if (!Object.values(reserva).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" });
+
+  reserva.checkIn = new Date(reserva.checkIn);
+  reserva.checkOut = new Date(reserva.checkOut);
+
+  reserva.quarto = await db.Quarto.findById(req.body.quarto);
+  if (reserva.quarto == null) return res.status(404).send({ error: "Quarto não encontrado" });
+
+  let occupies = await db.Reserva.findOne({
+    $or: [
+      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkIn }, checkOut: { $gte: reserva.checkIn } },
+      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkOut }, checkOut: { $gte: reserva.checkOut } },
+      { quarto: reserva.quarto, checkIn: { $gt: reserva.checkIn }, checkOut: { $lt: reserva.checkOut } }
+    ]
+  });
+  if (occupies != null) return res.status(406).send({ error: "Reserva inválida" });
+
+  let r = await createReserva(reserva)
+
+  let docDep = [];
+
+  if (req.body.dependentes != null && req.body.dependentes.length > 0)
+    docDep = await Promise.all(req.body.dependentes.map(async (d) => {
+      return await addHospedeReserva(d, r._id, titular = false);
+    }));
+
+  docDep.push(await addHospedeReserva(req.body.titular, r._id))
+
+  return res.status(200).send(await getReserva({ _id: r._id }));
+}
 
 //export controller functions
 module.exports = {
@@ -263,12 +310,10 @@ module.exports = {
   cadastro,
   servicos,
   statusServico,
-  getAllObj,
-  newObj,
-  deleteAllObj,
-  getOneObj,
-  newComment,
-  deleteOneObj,
+  addReserva,
+  checkReserva,
+  checkHospede,
+  getQuartos,
   addCarro,
   getCarro,
   addServico,

@@ -89,14 +89,14 @@ const addHospedes = async function () {
 
 const addReservas = async function (quartos) {
   reserva1 = await createReserva({
-    checkIn: new Date('2022-11-08T08:00:00.000-03:00'),
-    checkOut: new Date('2022-12-08T18:00:00.000-03:00'),
+    checkIn: new Date("2022-11-08T08:00:00.000-03:00"),
+    checkOut: new Date("2022-12-08T18:00:00.000-03:00"),
     quarto: quartos[0],
   });
 
   reserva2 = await createReserva({
-    checkIn: new Date('2022-11-08T08:00:00.000-03:00'),
-    checkOut: new Date('2023-01-28T18:00:00.000-03:00'),
+    checkIn: new Date("2022-11-08T08:00:00.000-03:00"),
+    checkOut: new Date("2023-01-28T18:00:00.000-03:00"),
     quarto: quartos[1],
   });
 
@@ -164,74 +164,74 @@ const addFuncionarios = async function () {
 const addServicos = async function () {
   const servicos = [
     {
-      nome: 'Serviço de quarto',
-      tipo: 'Serviço de quarto',
+      nome: "Serviço de quarto",
+      tipo: "Serviço de quarto",
       imageUrl:
-        'https://cdn.sanity.io/images/tbvc1g2x/production/e48f7be484d6838b1812cbebcbbcf068b8581bfc-1600x1067.jpg?w=1600&h=1067&auto=format',
+        "https://cdn.sanity.io/images/tbvc1g2x/production/e48f7be484d6838b1812cbebcbbcf068b8581bfc-1600x1067.jpg?w=1600&h=1067&auto=format",
       espera: 30,
       preco: 15.00,
     },
     {
-      nome: 'Iogurte com cereais e frutas',
-      tipo: 'Café da Manhã',
+      nome: "Iogurte com cereais e frutas",
+      tipo: "Café da Manhã",
       imageUrl:
-        'https://images.unsplash.com/photo-1581559178851-b99664da71ba?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=386&q=80',
+        "https://images.unsplash.com/photo-1581559178851-b99664da71ba?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=386&q=80",
       espera: 20,
       preco: 10.00,
     },
     {
-      nome: 'Torrada e ovo frito',
-      tipo: 'Café da Manhã',
+      nome: "Torrada e ovo frito",
+      tipo: "Café da Manhã",
       imageUrl:
-        'https://images.unsplash.com/photo-1525351484163-7529414344d8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&q=80',
+        "https://images.unsplash.com/photo-1525351484163-7529414344d8?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&q=80",
       espera: 25,
       preco: 12.00,
     },
     {
-      nome: 'Carne assada com vegetais',
-      tipo: 'Almoço',
+      nome: "Carne assada com vegetais",
+      tipo: "Almoço",
       imageUrl:
-        'https://images.unsplash.com/photo-1573225342350-16731dd9bf3d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=762&q=80',
+        "https://images.unsplash.com/photo-1573225342350-16731dd9bf3d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=762&q=80",
       espera: 60,
       preco: 30.00,
     },
     {
-      nome: 'Pizza de quatro quejos',
-      tipo: 'Jantar',
+      nome: "Pizza de quatro quejos",
+      tipo: "Jantar",
       imageUrl:
-        'https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80',
+        "https://images.unsplash.com/photo-1513104890138-7c749659a591?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=870&q=80",
       espera: 60,
       preco: 40.00,
     },
     {
-      nome: 'Spaghetti com Molho de Tomate',
-      tipo: 'Almoço',
+      nome: "Spaghetti com Molho de Tomate",
+      tipo: "Almoço",
       imageUrl:
-        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg/800px-Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg',
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg/800px-Spaghetti_Bolognese_mit_Parmesan_oder_Grana_Padano.jpg",
       espera: 40,
       preco: 35.00,
     },
     {
-      nome: 'Hamburguer clássico',
-      tipo: 'Jantar',
+      nome: "Hamburguer clássico",
+      tipo: "Jantar",
       imageUrl:
-        'https://cdn.pixabay.com/photo/2014/10/23/18/05/burger-500054_1280.jpg',
+        "https://cdn.pixabay.com/photo/2014/10/23/18/05/burger-500054_1280.jpg",
       espera: 45,
       preco: 15.00,
     },
     {
-      nome: 'Mousse de Laranja',
-      tipo: 'Almoço',
+      nome: "Mousse de Laranja",
+      tipo: "Almoço",
       imageUrl:
-        'https://cdn.pixabay.com/photo/2017/05/01/05/18/pastry-2274750_1280.jpg',
+        "https://cdn.pixabay.com/photo/2017/05/01/05/18/pastry-2274750_1280.jpg",
       espera: 40,
       preco: 15.00,
     },
     {
-      nome: 'Suflê de Chocolate',
-      tipo: 'Jantar',
+      nome: "Suflê de Chocolate",
+      tipo: "Jantar",
       imageUrl:
-        'https://cdn.pixabay.com/photo/2014/08/07/21/07/souffle-412785_1280.jpg',
+        "https://cdn.pixabay.com/photo/2014/08/07/21/07/souffle-412785_1280.jpg",
       espera: 30,
       preco: 15.00,
     }];
@@ -243,30 +243,33 @@ const addServicos = async function () {
 
 const addQuartos = async function () {
   var quarto1 = await createQuarto({
-    nome: "Quarto top",
-    numero: "25a",
+    nome: "Quarto Família",
+    numero: "2a",
     macAddressEsp: "58:BF:25:33:3B:DC",
     maxOcupantes: 5,
-    precoBase: 500,
+    precoBase: 300,
     ocupado: true,
+    imageUrl: "https://cdn.pixabay.com/photo/2017/01/14/12/48/hotel-1979406_960_720.jpg"
   });
 
   var quarto2 = await createQuarto({
-    nome: "Quarto nao tao top",
-    numero: "25b",
+    nome: "Quarto Casal",
+    numero: "2b",
     macAddressEsp: "EC:62:60:83:ED:54",
     maxOcupantes: 2,
     precoBase: 150,
     ocupado: true,
+    imageUrl: "https://cdn.pixabay.com/photo/2016/09/18/03/28/travel-1677347_960_720.jpg"
   });
 
   var quarto3 = await createQuarto({
-    nome: "Quarto lixo",
+    nome: "Quarto Solteiro",
     numero: "1a",
     macAddressEsp: "0C:B8:15:D8:7C:EC",
     maxOcupantes: 1,
     precoBase: 50,
     ocupado: false,
+    imageUrl: "https://cdn.pixabay.com/photo/2016/04/15/11/43/hotel-1330834_960_720.jpg"
   });
 
   return [quarto1, quarto2, quarto3];

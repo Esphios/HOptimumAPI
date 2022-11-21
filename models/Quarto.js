@@ -8,7 +8,8 @@ const Quarto = mongoose.model(
       macAddressEsp: { type: String, required: true },
       maxOcupantes: { type: Number, required: true },
       precoBase: { type: Number, required: true },
-      ocupado: { type: Boolean, defaul: false, required: true },
+      ocupado: { type: Boolean, default: false, required: true },
+      imageUrl: { type: String, required: true },
       registros: [
         {
             type: mongoose.Schema.Types.ObjectId,
