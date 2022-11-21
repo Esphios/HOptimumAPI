@@ -303,8 +303,34 @@ const addReserva = async (req, res) => {
   return res.status(200).send(await getReserva({ _id: r._id }));
 }
 
+const listHospedes = async (req, res) => {
+  let now = Date.now();
+  let list = await db.Reserva.find({ checkIn: { $lte: now }, checkOut: { $gte: now } })
+    .populate("cartoesChave")
+    .populate({
+      path: "hospedes",
+      populate: {
+        path: "hospede",
+        select: "-senha -reservas",
+        populate: {
+          path: "carros"
+        },
+      },
+    })
+    .populate({
+      path: "servicos",
+      populate: {
+        path: "servico",
+      },
+    })
+
+  return res.status(200).send(list);
+}
+
+
 //export controller functions
 module.exports = {
+  listHospedes,
   login,
   garagem,
   cadastro,

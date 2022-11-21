@@ -8,6 +8,7 @@ const apiController = require('../controllers/api');
 
 router.get('/api/servicos', apiController.servicos);
 router.get('/api/quartos', apiController.getQuartos);
+router.get('/api/hospedes', apiController.listHospedes);
 router.get('/api/carro', apiController.getCarro);
 
 // router.get('/api/:name', apiController.getOneObj);
