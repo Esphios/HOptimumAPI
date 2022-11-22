@@ -307,6 +307,7 @@ const listHospedes = async (req, res) => {
   let now = Date.now();
   let list = await db.Reserva.find({ checkIn: { $lte: now }, checkOut: { $gte: now } })
     .populate("cartoesChave")
+    .populate("quarto")
     .populate({
       path: "hospedes",
       populate: {
