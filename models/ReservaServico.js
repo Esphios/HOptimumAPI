@@ -13,7 +13,11 @@ var ReservaServicoSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Funcionario",
     },
-    status: String,
+    status:
+    {
+      type: String,
+      default: "espera",
+    },
   },
   { timestamps: { currentTime: Date.now }}
 );
