@@ -179,6 +179,7 @@ const getHospedeWithPopulate = async function (pessoa) {
 
   return _hospede != null ? await db.Hospede.findOne(pessoa)
     .select("-senha")
+    .populate("relatos")
     .populate({
       path: "reservas",
       populate: {
@@ -347,9 +348,18 @@ const resetFuncionarioConnections = async function (funcionario) {
     if (err) console.log('error: ', err);
     console.log(`${affected.modifiedCount} funcionarios tiveram suas conexões resetadas com sucesso!`);
   });
+};
+
+const secure = function (req, res, next, f) {
+  try {
+    return f(req, res, next);
+  } catch (error) {
+    return res.status(500).send({error: "Erro inesperado", error})
+  }
 }
 
 module.exports = {
+  secure,
   createCargo,
   createFuncionario,
   createServico,

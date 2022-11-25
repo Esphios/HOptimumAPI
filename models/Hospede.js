@@ -21,6 +21,12 @@ const Hospede = mongoose.model(
           ref: "HospedeReserva",
         },
       ],
+      relatos: [
+        {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Relato",
+        },
+      ],
       carros: [
         {
           type: mongoose.Schema.Types.ObjectId,

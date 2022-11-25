@@ -12,6 +12,7 @@ const {
   pushCarroToHospede,
   getReservaWithPopulate: getReserva,
   getServicoWithPopulate: getServico,
+  getHospedeWithPopulate: getHospede,
 } = require("../scripts/utilsDB.js");
 const db = require("../models");
 const { sendToClient } = require("./websocket.js");
@@ -40,7 +41,11 @@ const login = async (req, res) => {
     case "funcionario":
       await db.Funcionario.updateOne({ _id: p.data._id }, { $push: { conexoes: id } });
       console.log("logged in: ", email, id);
-      return res.status(200).json({ funcionario: p.data });
+      if (p.data.cargo.nome == "segurança"){
+        p.data = JSON.parse(JSON.stringify(p.data))
+        p.data.relatos = await db.Relato.find({});
+      }
+      return res.status(200).send({ funcionario: p.data });
 
     default:
       return res
@@ -226,6 +231,7 @@ const addServico = async (req, res) => {
   return res.status(200).send(doc);
 };
 
+//GET '/api/quartos'
 const getQuartos = async (req, res) => {
   let quartos = await db.Quarto.find({});
   return res.status(200).send(quartos);
@@ -258,6 +264,7 @@ const checkReserva = async (req, res) => {
 
 }
 
+//POST '/api/hospede'
 const checkHospede = async (req, res) => {
   let hospede = await db.Hospede.findOne({ cpf: req.body.cpf }, "nome");
 
@@ -266,6 +273,7 @@ const checkHospede = async (req, res) => {
 
 }
 
+//POST '/api/reserva'
 const addReserva = async (req, res) => {
   let reserva = {
     checkIn: req.body.checkIn,
@@ -303,6 +311,7 @@ const addReserva = async (req, res) => {
   return res.status(200).send(await getReserva({ _id: r._id }));
 }
 
+//GET '/api/hospedes'
 const listHospedes = async (req, res) => {
   let now = Date.now();
   let list = await db.Reserva.find({ checkIn: { $lte: now }, checkOut: { $gte: now } })
@@ -328,9 +337,38 @@ const listHospedes = async (req, res) => {
   return res.status(200).send(list);
 }
 
+//POST '/api/report'
+const report = async (req, res) => {
+  const id = req.body.id;
+  const text = req.body.text;
+
+  if (!isValid(id) || !isValid(text))
+    return res.status(400).send({ error: "Missing information" });
+
+  let hospede = await getHospede({ _id: id });
+
+  if (hospede == null)
+    return res
+      .status(404)
+      .send({ error: "Pessoa não encontrada, confira as credenciais" });
+
+  let relato = await db.Relato.create({ texto: text, hospede: hospede })
+
+  let doc = await db.Hospede.findOneAndUpdate(id, { $push: { relatos: relato } })
+
+  let cargo = await db.Cargo.find({ nome: "segurança" })
+  let funcs = await db.Funcionario.find({ cargo: cargo }, 'conexoes')
+
+  const conns = funcs.reduce((acc, cur) => acc.concat(cur.conexoes), []);
+  conns.forEach((uid) => sendToClient(uid, JSON.stringify(relato)));
+
+  return res.status(200).send(relato);
+}
+
 
 //export controller functions
 module.exports = {
+  report,
   listHospedes,
   login,
   garagem,

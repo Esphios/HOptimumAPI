@@ -9,6 +9,7 @@ module.exports = {
   LogCarro: require("./LogCarro"),
   LogQuarto: require("./LogQuarto"),
   Quarto: require("./Quarto"),
+  Relato: require("./Relato"),
   Reserva: require("./Reserva"),
   Servico: require("./Servico"),
 };
