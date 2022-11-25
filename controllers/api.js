@@ -41,9 +41,21 @@ const login = async (req, res) => {
     case "funcionario":
       await db.Funcionario.updateOne({ _id: p.data._id }, { $push: { conexoes: id } });
       console.log("logged in: ", email, id);
-      if (p.data.cargo.nome == "segurança"){
+      if (p.data.cargo.nome == "segurança") {
         p.data = JSON.parse(JSON.stringify(p.data))
-        p.data.relatos = await db.Relato.find({});
+        p.data.relatos = await db.Relato.find({}).populate({
+          path: 'hospede',
+          select: '-senha',
+          populate: {
+            path: 'reservas',
+            populate: {
+              path: 'reserva',
+              populate: {
+                path: 'quarto'
+              }
+            }
+          }
+        });
       }
       return res.status(200).send({ funcionario: p.data });
 
