@@ -253,6 +253,8 @@ const getPeople = async function (data) {
 const getPeopleESP = async function (data) {
   var func = await getFuncionarioWithPopulate({ cartoesChave: data.cartoesChave });
   if (func == null) {
+    data.checkIn  = {$gte: Date.now()}
+    data.checkOut = {$lte: Date.now()}
     var hosp = await getReservaWithPopulate(data);
     if (hosp == null) return { type: null, data: null };
     return { type: 'hospede', data: hosp };

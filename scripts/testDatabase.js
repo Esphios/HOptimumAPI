@@ -107,7 +107,7 @@ const addCarros = async function () {
   var carro1 = await createCarro({
     cor: "preto",
     modelo: "fuscão",
-    placa: "OTM2022",
+    placa: "AXW6652",
   });
 
   var carro2 = await createCarro({
