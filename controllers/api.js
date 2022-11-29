@@ -27,7 +27,7 @@ const login = async (req, res) => {
   // console.log(req.body);
 
   if (!isValid(email) || !isValid(senha) || !isValid(id))
-    return res.status(400).send({ error: "Missing information" });
+    return res.status(400).send({ error: "Informações faltando" });
 
   var p = await getPeople({ email: email, senha: senha });
 
@@ -72,7 +72,7 @@ const garagem = async (req, res) => {
   const status = req.body.status;
 
   if (!isValid(placa) || !isValid(status))
-    return res.status(400).send({ error: "Missing information" });
+    return res.status(400).send({ error: "Informações faltando" });
 
   var carro = await db.Carro.findOne({ placa: placa });
   if (carro == null) return res.status(404).send({ error: "carro não cadastrado" });
@@ -97,7 +97,7 @@ const statusServico = async (req, res) => {
   const status = req.body.status;
 
   if (!isValid(id) || !isValid(status))
-    return res.status(400).send({ error: "Missing information" });
+    return res.status(400).send({ error: "Informações faltando" });
 
   var rs = await db.ReservaServico.findByIdAndUpdate(id, { status: status }, { new: true });
   if (rs == null) return res.status(404).send({ error: "Serviço não encontrado" });
@@ -223,7 +223,7 @@ const addServico = async (req, res) => {
   const idReserva = req.body.idReserva;
 
   if (!isValid(idServico) || !isValid(idReserva))
-    return res.status(400).send({ error: "Missing information" });
+    return res.status(400).send({ error: "Informações faltando" });
 
   let s = await getServico({ _id: idServico });
   let r = await getReserva({ _id: idReserva });
@@ -355,7 +355,7 @@ const report = async (req, res) => {
   const text = req.body.text;
 
   if (!isValid(id) || !isValid(text))
-    return res.status(400).send({ error: "Missing information" });
+    return res.status(400).send({ error: "Informações faltando" });
 
   let hospede = await getHospede({ _id: id });
 
@@ -377,9 +377,29 @@ const report = async (req, res) => {
   return res.status(200).send(relato);
 }
 
+//POST '/api/updatereserva'
+const updateReserva = async (req, res) => {
+  const id = req.body.id;
+  let update = req.body.update;
+
+  if (!isValid(id) || !isValid(update))
+    return res.status(400).send({ error: "Informações faltando" });
+
+  update = update.toUpperCase();
+  if (!["ATIVA", "FINALIZADA", "CANCELADA"].includes(update))
+    return res.status(400).send({ error: "Update inválido" });
+
+  var query = db.Reserva.findByIdAndUpdate(id, { status: update }, { new: true });
+  await query.exec().then(function (ok) {
+    return res.status(200).send(ok);
+  }).catch(function (err) {
+    return res.status(400).send({ error: "Query negada", data: err });
+  });
+}
 
 //export controller functions
 module.exports = {
+  updateReserva,
   report,
   listHospedes,
   login,

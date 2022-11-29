@@ -22,6 +22,7 @@ router.post('/api/statusservico', (...params) => secure(...params, apiController
 router.post('/api/carro', (...params) => secure(...params, apiController.addCarro));
 router.post('/api/servico', (...params) => secure(...params, apiController.addServico));
 router.post('/api/reserva', (...params) => secure(...params, apiController.addReserva));
+router.post('/api/updatereserva', (...params) => secure(...params, apiController.updateReserva));
 
 router.post('/api/reservacheck', (...params) => secure(...params, apiController.checkReserva));
 router.post('/api/hospedecheck', (...params) => secure(...params, apiController.checkHospede));

@@ -11,7 +11,7 @@ const authenticate = async (req, res) => {
     const cartao = req.body.cartao;
 
     if (!isValid(mac) || !isValid(cartao))
-        return res.status(400).send({ error: "Missing information" });
+        return res.status(400).send({ error: "Informações faltando" });
 
 
     var quarto = await db.Quarto.findOne({ macAddressEsp: mac }, '-registros');
