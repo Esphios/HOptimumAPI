@@ -327,7 +327,7 @@ const addReserva = async (req, res) => {
 
 //GET '/api/hospedes'
 const listHospedes = async (req, res) => {
-  let now = new Date();
+  let now = Date.now();
   now.setHours(0,0,0,0);
 
   let list = await db.Reserva.find({ checkIn: { $lte: now }, checkOut: { $gte: now } })
