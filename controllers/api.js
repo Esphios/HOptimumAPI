@@ -264,6 +264,7 @@ const checkReserva = async (req, res) => {
   if (reserva.quarto == null) return res.status(404).send({ error: "Quarto não encontrado" });
 
   let occupies = await db.Reserva.findOne({
+    status: "ATIVA",
     $or: [
       { quarto: reserva.quarto, checkIn: { $lte: reserva.checkIn }, checkOut: { $gte: reserva.checkIn } },
       { quarto: reserva.quarto, checkIn: { $lte: reserva.checkOut }, checkOut: { $gte: reserva.checkOut } },
@@ -301,6 +302,7 @@ const addReserva = async (req, res) => {
   if (reserva.quarto == null) return res.status(404).send({ error: "Quarto não encontrado" });
 
   let occupies = await db.Reserva.findOne({
+    status: "ATIVA",
     $or: [
       { quarto: reserva.quarto, checkIn: { $lte: reserva.checkIn }, checkOut: { $gte: reserva.checkIn } },
       { quarto: reserva.quarto, checkIn: { $lte: reserva.checkOut }, checkOut: { $gte: reserva.checkOut } },
