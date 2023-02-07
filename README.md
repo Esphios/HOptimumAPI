@@ -6,4 +6,5 @@ Essa é a API desenvolvida em NodeJS e com banco de dados do MongoDB para o HOpt
 ## Como usar:
 
 ```npm install```
+
 *OBS.: Para rodar o projeto, lembre-se de adicionar as informações segundo o .env modelo dentro do root do projeto.
