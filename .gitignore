@@ -13,6 +13,8 @@
 # production
 /build
 .env
+*.log
+server-run.log
 tea.test.js
 
 # misc

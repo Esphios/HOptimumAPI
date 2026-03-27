@@ -1,10 +1,22 @@
-# HOptimumAPI
-Aplicação de sistemas integrados para redes de hotelaria
+﻿# HOptimumAPI
+Aplicação de sistemas integrados para redes de hotelaria.
 
-Essa é a API desenvolvida em NodeJS e com banco de dados do MongoDB para o HOptimum, uma aplicação usada como trabalho de conclusão de curso em Engenharia da Computação em 2022.
+Esta é a API desenvolvida em Node.js com MongoDB para o HOptimum, uma aplicação usada como trabalho de conclusão de curso em Engenharia da Computação em 2022.
 
-## Como usar:
+## Como usar
 
-```npm install```
+```bash
+npm install
+npm start
+```
 
-*OBS.: Para rodar o projeto, lembre-se de adicionar as informações segundo o .env modelo dentro do root do projeto.
+## Requisitos de ambiente
+
+O projeto depende de um MongoDB acessível no momento da inicialização.
+
+Variáveis de ambiente esperadas:
+
+```env
+PORT=3000
+MONGODB_URI=mongodb://localhost:27017/hoptimum
+```
