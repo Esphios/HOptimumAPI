@@ -69,9 +69,18 @@ const runMandatoryStartupTasks = async () => {
   await resetAllConnections();
 };
 
+const disconnectMongo = async () => {
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+  }
+
+  startupState.setMongoConnected(false);
+};
+
 module.exports = {
   DEFAULT_MONGODB_OPTIONS,
   connectMongo,
+  disconnectMongo,
   getConnectRetryPolicy,
   isTransientMongoError,
   runMandatoryStartupTasks,
