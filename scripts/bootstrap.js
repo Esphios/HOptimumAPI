@@ -77,12 +77,27 @@ const disconnectMongo = async () => {
   startupState.setMongoConnected(false);
 };
 
+const onMongoConnected = (handler) => {
+  mongoose.connection.on("connected", handler);
+};
+
+const onMongoDisconnected = (handler) => {
+  mongoose.connection.on("disconnected", handler);
+};
+
+const onMongoError = (handler) => {
+  mongoose.connection.on("error", handler);
+};
+
 module.exports = {
   DEFAULT_MONGODB_OPTIONS,
   connectMongo,
   disconnectMongo,
   getConnectRetryPolicy,
   isTransientMongoError,
+  onMongoConnected,
+  onMongoDisconnected,
+  onMongoError,
   runMandatoryStartupTasks,
   validateConfig,
 };

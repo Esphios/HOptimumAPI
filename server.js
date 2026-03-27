@@ -8,6 +8,9 @@ const {
   disconnectMongo,
   runMandatoryStartupTasks,
   validateConfig,
+  onMongoConnected,
+  onMongoDisconnected,
+  onMongoError,
 } = require("./scripts/bootstrap");
 const startupState = require("./scripts/startupState");
 require("dotenv").config();
@@ -17,12 +20,35 @@ startupState.markPhase("bootstrapping");
 
 const app = express()
   .use(express.json())
+  .get("/health/liveness", (req, res) => {
+    res.status(200).json({
+      status: "alive",
+      state: startupState.cloneState(),
+    });
+  })
+  .get("/health/readiness", (req, res) => {
+    const state = startupState.cloneState();
+    res.status(state.ready ? 200 : 503).json({
+      status: state.ready ? "ready" : "not_ready",
+      state,
+    });
+  })
   .use("/public", express.static(process.cwd() + "/public")) //make public static
+  .use((req, res, next) => {
+    if (startupState.cloneState().ready) {
+      return next();
+    }
+
+    return res.status(503).json({
+      error: "Service unavailable",
+      details: "Application is still bootstrapping dependencies",
+    });
+  })
   .use("/", routes);
 
 const server = http.createServer(app);
-const websocketServer = new Server({ server });
 let shuttingDown = false;
+let websocketServer = null;
 
 const listen = () =>
   new Promise((resolve, reject) => {
@@ -32,6 +58,16 @@ const listen = () =>
       console.log(`Listening on ${server.address().port}`);
       resolve();
     });
+  });
+
+const closeWebsocketServer = () =>
+  new Promise((resolve) => {
+    if (!websocketServer) {
+      resolve();
+      return;
+    }
+
+    websocketServer.close(() => resolve());
   });
 
 const closeServer = () =>
@@ -68,6 +104,7 @@ const shutdown = async (reason, error) => {
   }
 
   try {
+    await closeWebsocketServer();
     await closeServer();
     await disconnectMongo();
   } finally {
@@ -79,8 +116,10 @@ const bootstrap = async () => {
   try {
     await connectMongo();
     await runMandatoryStartupTasks();
-    await listen();
-    wsListener(websocketServer);
+    if (!websocketServer) {
+      websocketServer = new Server({ server });
+      wsListener(websocketServer);
+    }
     startupState.markPhase("ready");
     startupState.setReady(true);
   } catch (error) {
@@ -89,6 +128,29 @@ const bootstrap = async () => {
     await shutdown("Startup failure", error);
   }
 };
+
+onMongoConnected(() => {
+  startupState.setMongoConnected(true);
+
+  const { phase } = startupState.cloneState();
+  if (!shuttingDown && (phase === "ready" || phase === "degraded")) {
+    startupState.markPhase("ready");
+    startupState.setReady(true);
+  }
+});
+
+onMongoDisconnected(() => {
+  startupState.setMongoConnected(false);
+
+  if (!shuttingDown) {
+    startupState.markPhase("degraded");
+    startupState.setReady(false);
+  }
+});
+
+onMongoError((error) => {
+  startupState.setLastError(error);
+});
 
 process.on("SIGINT", () => shutdown("Received SIGINT"));
 process.on("SIGTERM", () => shutdown("Received SIGTERM"));
@@ -100,4 +162,6 @@ process.on("uncaughtException", (error) => {
   shutdown("Uncaught exception", error);
 });
 
-bootstrap();
+listen()
+  .then(bootstrap)
+  .catch((error) => shutdown("Failed to bind HTTP server", error));
