@@ -2,36 +2,33 @@ const express = require("express");
 const { Server } = require("ws");
 const { wsListener } = require("./controllers/websocket.js");
 const routes = require("./routes/api");
-const script = require("./scripts/testDatabase");
+const {
+  connectMongo,
+  runMandatoryStartupTasks,
+  validateConfig,
+} = require("./scripts/bootstrap");
+const startupState = require("./scripts/startupState");
 require("dotenv").config();
 
-//establish connection to database
-const mongoose = require("mongoose");
+validateConfig();
+startupState.markPhase("bootstrapping");
 
 const server = express()
   .use(express.json())
   .use("/public", express.static(process.cwd() + "/public")) //make public static
   .use("/", routes)
   .listen(process.env.PORT || 3000, () => {
-
     console.log(`Listening on ${server.address().port}`)
-    script.resetAllConnections();
-    // script.run();
-
-    mongoose.connect(
-      process.env.MONGODB_URI,
-      {
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-      },
-      function (err) {
-        if (err) return console.log("Error: ", err);
-        console.log(
-          "MongoDB Connection -- Ready state is:",
-          mongoose.connection.readyState
-        );
-      }
-    );
+    connectMongo()
+      .then(runMandatoryStartupTasks)
+      .then(() => {
+        startupState.markPhase("ready");
+        startupState.setReady(true);
+      })
+      .catch((error) => {
+        startupState.setLastError(error);
+        console.error("Startup failure:", error);
+      });
   }
   );
 
