@@ -17,6 +17,11 @@ const validateConfig = () => {
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const parsePositiveInteger = (value, fallback) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
 const isTransientMongoError = (error) => {
   if (!error) {
     return false;
@@ -32,8 +37,14 @@ const isTransientMongoError = (error) => {
 };
 
 const getConnectRetryPolicy = () => ({
-  maxAttempts: Number(process.env.MONGODB_CONNECT_MAX_ATTEMPTS || DEFAULT_CONNECT_RETRIES),
-  delayMs: Number(process.env.MONGODB_CONNECT_RETRY_DELAY_MS || DEFAULT_RETRY_DELAY_MS),
+  maxAttempts: parsePositiveInteger(
+    process.env.MONGODB_CONNECT_MAX_ATTEMPTS,
+    DEFAULT_CONNECT_RETRIES
+  ),
+  delayMs: parsePositiveInteger(
+    process.env.MONGODB_CONNECT_RETRY_DELAY_MS,
+    DEFAULT_RETRY_DELAY_MS
+  ),
 });
 
 const connectMongo = async (
