@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "test": "nodemon server.js"
+    "test": "nodemon server.js",
+    "smoke:startup": "node scripts/smokeStartup.js"
   },
   "repository": {
     "type": "git",

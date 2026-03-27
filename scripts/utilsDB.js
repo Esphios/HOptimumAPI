@@ -341,23 +341,28 @@ const dropCollection = function (collection) {
 };
 
 const resetHospedeConnections = async function (hospede) {
-  db.Hospede.updateMany(hospede, { $set: { conexoes: [] } }, function (err, affected) {
-    if (err) console.log('error: ', err);
-    console.log(`${affected.modifiedCount} hospedes tiveram suas conexões resetadas com sucesso!`);
-  });
-}
+  const affected = await db.Hospede.updateMany(hospede, { $set: { conexoes: [] } });
+  const modifiedCount = typeof affected?.modifiedCount === "number" ? affected.modifiedCount : 0;
+
+  console.log(`${modifiedCount} hospedes tiveram suas conexões resetadas com sucesso!`);
+  return affected;
+};
+
 const resetFuncionarioConnections = async function (funcionario) {
-  db.Funcionario.updateMany(funcionario, { $set: { conexoes: [] } }, function (err, affected) {
-    if (err) console.log('error: ', err);
-    console.log(`${affected.modifiedCount} funcionarios tiveram suas conexões resetadas com sucesso!`);
-  });
+  const affected = await db.Funcionario.updateMany(funcionario, { $set: { conexoes: [] } });
+  const modifiedCount = typeof affected?.modifiedCount === "number" ? affected.modifiedCount : 0;
+
+  console.log(`${modifiedCount} funcionarios tiveram suas conexões resetadas com sucesso!`);
+  return affected;
 };
 
 const secure = function (req, res, next, f) {
   try {
-    return f(req, res, next);
+    return Promise.resolve(f(req, res, next)).catch((error) => {
+      return res.status(500).send({ error: "Erro inesperado", details: error.message });
+    });
   } catch (error) {
-    return res.status(500).send({error: "Erro inesperado", error})
+    return res.status(500).send({ error: "Erro inesperado", details: error.message });
   }
 }
 
