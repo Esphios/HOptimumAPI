@@ -17,7 +17,10 @@ const {
   pushCarroToHospede,
 } = require("../scripts/utilsDB.js");
 const db = require("../models");
-const { sendToClient } = require("./websocket.js");
+const {
+  authenticateClientConnection,
+  sendToClient,
+} = require("./websocket.js");
 const {
   hashPassword,
   isPasswordHash,
@@ -122,6 +125,11 @@ const login = async (req, res) => {
 
   const token = issueAuthToken({
     userId: credentialRecord.data._id,
+    userType: credentialRecord.type,
+    roleName: credentialRecord.data?.cargo?.nome || null,
+  });
+  authenticateClientConnection(id, {
+    userId: String(credentialRecord.data._id),
     userType: credentialRecord.type,
     roleName: credentialRecord.data?.cargo?.nome || null,
   });
@@ -237,15 +245,16 @@ const cadastro = async (req, res) => {
         return res.status(404).send({ error: "Cargo nÃ£o encontrado" });
       }
 
+      const carIds = Array.isArray(carros) ? carros : [];
+      if (!isOptionalObjectIdArray(carIds)) {
+        return res.status(400).send({ error: "Lista de carros invÃ¡lida" });
+      }
+
       const func = await createFuncionario({
         ...dados,
         cargo,
         senha: await hashPassword(dados.senha),
       });
-      const carIds = Array.isArray(carros) ? carros : [];
-      if (!isOptionalObjectIdArray(carIds)) {
-        return res.status(400).send({ error: "Lista de carros invÃ¡lida" });
-      }
 
       await Promise.all(
         carIds.map(async (carId) => {
@@ -289,14 +298,15 @@ const cadastro = async (req, res) => {
           .send({ error: "InformaÃ§Ãµes faltando, cheque os dados novamente" });
       }
 
-      const hospede = await createHospede({
-        ...dados,
-        senha: await hashPassword(dados.senha),
-      });
       const carPlates = Array.isArray(carros) ? carros : [];
       if (!carPlates.every((placa) => isNonEmptyString(placa))) {
         return res.status(400).send({ error: "Lista de carros invÃ¡lida" });
       }
+
+      const hospede = await createHospede({
+        ...dados,
+        senha: await hashPassword(dados.senha),
+      });
 
       await Promise.all(
         carPlates.map(async (placa) => {

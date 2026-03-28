@@ -90,37 +90,41 @@ const issueAuthToken = ({ userId, userType, roleName = null }) => {
 };
 
 const verifyAuthToken = (token) => {
-  if (typeof token !== "string") {
+  try {
+    if (typeof token !== "string") {
+      return null;
+    }
+
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      return null;
+    }
+
+    const [header, body, signature] = parts;
+    const expectedSignature = signTokenPayload(`${header}.${body}`);
+    const expectedBuffer = Buffer.from(expectedSignature);
+    const actualBuffer = Buffer.from(signature);
+
+    if (
+      expectedBuffer.length !== actualBuffer.length ||
+      !crypto.timingSafeEqual(expectedBuffer, actualBuffer)
+    ) {
+      return null;
+    }
+
+    const payload = JSON.parse(base64UrlDecode(body));
+    if (typeof payload.exp !== "number" || payload.exp < Date.now()) {
+      return null;
+    }
+
+    return {
+      userId: payload.sub,
+      userType: payload.type,
+      roleName: payload.role,
+    };
+  } catch {
     return null;
   }
-
-  const parts = token.split(".");
-  if (parts.length !== 3) {
-    return null;
-  }
-
-  const [header, body, signature] = parts;
-  const expectedSignature = signTokenPayload(`${header}.${body}`);
-  const expectedBuffer = Buffer.from(expectedSignature);
-  const actualBuffer = Buffer.from(signature);
-
-  if (
-    expectedBuffer.length !== actualBuffer.length ||
-    !crypto.timingSafeEqual(expectedBuffer, actualBuffer)
-  ) {
-    return null;
-  }
-
-  const payload = JSON.parse(base64UrlDecode(body));
-  if (typeof payload.exp !== "number" || payload.exp < Date.now()) {
-    return null;
-  }
-
-  return {
-    userId: payload.sub,
-    userType: payload.type,
-    roleName: payload.role,
-  };
 };
 
 const extractBearerToken = (authorizationHeader) => {
@@ -143,7 +147,7 @@ const getRequestAuth = (req) => {
 };
 
 const requireAuth =
-  ({ allowTypes = null } = {}) =>
+  ({ allowTypes = null, allowRoles = null } = {}) =>
   (req, res, next) => {
     const auth = getRequestAuth(req);
 
@@ -152,6 +156,14 @@ const requireAuth =
     }
 
     if (Array.isArray(allowTypes) && !allowTypes.includes(auth.userType)) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    if (
+      Array.isArray(allowRoles) &&
+      auth.userType === "funcionario" &&
+      !allowRoles.includes(auth.roleName)
+    ) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
