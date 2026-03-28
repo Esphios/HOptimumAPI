@@ -1,59 +1,83 @@
-const mongoose = require("mongoose");
 const db = require("../models");
-const { getPeopleESP, createLogQuarto: logQuarto, getReservaWithPopulate: getReserva } = require("../scripts/utilsDB.js");
+const {
+  createLogQuarto: logQuarto,
+  getPeopleESP,
+  getReservaWithPopulate: getReserva,
+} = require("../scripts/utilsDB.js");
 const { sendToClient } = require("./websocket.js");
 
-const isValid = (string) => string != null && string.length > 0;
+const isNonEmptyString = (value) =>
+  typeof value === "string" && value.trim().length > 0;
 
-//POST '/api/auth'
 const authenticate = async (req, res) => {
-    const mac = req.body.mac;
-    const cartao = req.body.cartao;
+  const mac = req.body.mac;
+  const cartao = req.body.cartao;
 
-    if (!isValid(mac) || !isValid(cartao))
-        return res.status(400).send({ error: "Informações faltando" });
+  if (!isNonEmptyString(mac) || !isNonEmptyString(cartao)) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
+  }
 
+  const quarto = await db.Quarto.findOne({ macAddressEsp: mac }, "-registros");
+  if (quarto == null) {
+    return res.status(404).send({ error: "Mac address nÃ£o encontrado no cadastro." });
+  }
 
-    var quarto = await db.Quarto.findOne({ macAddressEsp: mac }, '-registros');
-    if (quarto == null)
-        return res.status(404).send({ error: "Mac address não encontrado no cadastro." });
+  const card = await db.CartaoChave.findOne({ codigo: cartao });
+  if (card == null) {
+    return res.status(404).send({ error: "CartÃ£o nÃ£o encontrado." });
+  }
 
-    var card = await db.CartaoChave.findOne({ codigo: cartao });
-    if (card == null)
-        return res.status(404).send({ error: "Cartão não encontrado." });
+  const person = await getPeopleESP({ quarto, cartoesChave: card });
 
-    var p = await getPeopleESP({ quarto: quarto, cartoesChave: card });
+  switch (person.type) {
+    case "hospede": {
+      const log = await logQuarto({ cartao: card, reserva: person.data, quarto });
+      await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
 
-    switch (p.type) {
+      const connections = person.data.hospedes.reduce(
+        (acc, cur) => acc.concat(cur.hospede.conexoes),
+        []
+      );
+      connections.forEach((connectionId) =>
+        sendToClient(connectionId, JSON.stringify(log))
+      );
 
-        case "hospede":
-            var log = await logQuarto({ cartao: card, reserva: p.data, quarto: quarto });
-            await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
-            var conexoes = p.data.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
-            conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
-            return res.status(200).json({ reserva: p.data });
-
-        case "funcionario":
-            var log = await logQuarto({ cartao: card, funcionario: p.data, quarto: quarto });
-            await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
-            await db.Funcionario.updateOne({ _id: p.data._id }, { $push: { registros: log } });
-
-            var reserva = await getReserva({ quarto: quarto, checkIn: { $lte: Date.now() }, checkOut: { $gte: Date.now() } })
-            if (reserva != null) {
-                var conn = reserva.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
-                conn.forEach((c) => sendToClient(c, JSON.stringify(log)));
-            }
-            p.data.conexoes.forEach((c) => sendToClient(c, JSON.stringify(log)));
-            return res.status(200).json({ funcionario: p.data });
-
-        default:
-            return res
-                .status(404)
-                .send({ error: "Pessoa não encontrada, confira as credenciais" });
+      return res.status(200).json({ reserva: person.data });
     }
+
+    case "funcionario": {
+      const log = await logQuarto({ cartao: card, funcionario: person.data, quarto });
+      await db.Quarto.updateOne({ _id: quarto._id }, { $push: { registros: log } });
+      await db.Funcionario.updateOne({ _id: person.data._id }, { $push: { registros: log } });
+
+      const reserva = await getReserva({
+        quarto,
+        checkIn: { $lte: Date.now() },
+        checkOut: { $gte: Date.now() },
+      });
+      if (reserva != null) {
+        const guestConnections = reserva.hospedes.reduce(
+          (acc, cur) => acc.concat(cur.hospede.conexoes),
+          []
+        );
+        guestConnections.forEach((connectionId) =>
+          sendToClient(connectionId, JSON.stringify(log))
+        );
+      }
+
+      person.data.conexoes.forEach((connectionId) =>
+        sendToClient(connectionId, JSON.stringify(log))
+      );
+      return res.status(200).json({ funcionario: person.data });
+    }
+
+    default:
+      return res
+        .status(404)
+        .send({ error: "Pessoa nÃ£o encontrada, confira as credenciais" });
+  }
 };
 
-//export controller functions
 module.exports = {
-    authenticate,
+  authenticate,
 };

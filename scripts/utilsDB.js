@@ -247,7 +247,21 @@ const getPeople = async function (data) {
     if (hosp == null) return { type: null, data: null };
     return { type: 'hospede', data: hosp };
   }
-  return { type: 'funcionario', data: func };;
+  return { type: 'funcionario', data: func };
+};
+
+const getCredentialRecordByEmail = async function (email) {
+  const funcionario = await db.Funcionario.findOne({ email }).populate("cargo");
+  if (funcionario != null) {
+    return { type: "funcionario", data: funcionario };
+  }
+
+  const hospede = await db.Hospede.findOne({ email });
+  if (hospede != null) {
+    return { type: "hospede", data: hospede };
+  }
+
+  return { type: null, data: null };
 };
 
 const getPeopleESP = async function (data) {
@@ -260,7 +274,7 @@ const getPeopleESP = async function (data) {
     if (hosp == null) return { type: null, data: null };
     return { type: 'hospede', data: hosp };
   }
-  return { type: 'funcionario', data: func };;
+  return { type: 'funcionario', data: func };
 };
 
 const getServicoWithPopulate = function (id) {
@@ -359,10 +373,12 @@ const resetFuncionarioConnections = async function (funcionario) {
 const secure = function (req, res, next, f) {
   try {
     return Promise.resolve(f(req, res, next)).catch((error) => {
-      return res.status(500).send({ error: "Erro inesperado", details: error.message });
+      console.error("Unhandled controller error", error);
+      return res.status(500).send({ error: "Erro inesperado" });
     });
   } catch (error) {
-    return res.status(500).send({ error: "Erro inesperado", details: error.message });
+    console.error("Synchronous controller error", error);
+    return res.status(500).send({ error: "Erro inesperado" });
   }
 }
 
@@ -380,6 +396,7 @@ module.exports = {
   createCartaoChave,
   addReservaServico,
   addHospedeReserva,
+  getCredentialRecordByEmail,
   getPeople,
   getPeopleESP,
   getHospedeWithPopulate,

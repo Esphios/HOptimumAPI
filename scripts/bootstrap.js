@@ -13,6 +13,14 @@ const validateConfig = () => {
   if (!process.env.MONGODB_URI) {
     throw new Error("MONGODB_URI environment variable is required");
   }
+
+  if (!process.env.AUTH_TOKEN_SECRET) {
+    throw new Error("AUTH_TOKEN_SECRET environment variable is required");
+  }
+
+  if (!process.env.ESP_SHARED_SECRET) {
+    throw new Error("ESP_SHARED_SECRET environment variable is required");
+  }
 };
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -77,7 +85,10 @@ const connectMongo = async (
 
 const runMandatoryStartupTasks = async () => {
   startupState.markPhase("running_startup_tasks");
-  await resetAllConnections();
+
+  if (process.env.ALLOW_DESTRUCTIVE_STARTUP_TASKS === "true") {
+    await resetAllConnections();
+  }
 };
 
 const disconnectMongo = async () => {

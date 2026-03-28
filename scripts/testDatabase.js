@@ -14,7 +14,6 @@ const {
   addReservaServico,
   addHospedeReserva,
   getFuncionarioWithPopulate,
-  getServicoWithPopulate,
   pushCarroToHospede,
   pushCarroToFunc,
   pushCartaoChaveToReserva,
@@ -88,13 +87,13 @@ const addHospedes = async function () {
 };
 
 const addReservas = async function (quartos) {
-  reserva1 = await createReserva({
+  const reserva1 = await createReserva({
     checkIn: new Date("2022-11-08T08:00:00.000-03:00"),
     checkOut: new Date("2022-12-08T18:00:00.000-03:00"),
     quarto: quartos[0],
   });
 
-  reserva2 = await createReserva({
+  const reserva2 = await createReserva({
     checkIn: new Date("2022-11-08T08:00:00.000-03:00"),
     checkOut: new Date("2023-01-28T18:00:00.000-03:00"),
     quarto: quartos[1],
@@ -303,36 +302,36 @@ const run = async function () {
   // var fs11 = await addFuncionarioServico(func[1]._id, serv[1]._id);
   // // console.log("\n>> fs2b:\n", fs11);
 
-  var rs1 = await addReservaServico(reservas[0]._id, servicos[0]._id, func[1])
-  var rs2 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
-  var rs3 = await addReservaServico(reservas[0]._id, servicos[1]._id, func[2])
-  var rs4 = await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
-  var rs5 = await addReservaServico(reservas[1]._id, servicos[3]._id, func[2])
+  await addReservaServico(reservas[0]._id, servicos[0]._id, func[1])
+  await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
+  await addReservaServico(reservas[0]._id, servicos[1]._id, func[2])
+  await addReservaServico(reservas[0]._id, servicos[2]._id, func[2])
+  await addReservaServico(reservas[1]._id, servicos[3]._id, func[2])
 
-  var hr00 = await addHospedeReserva(hospedes[0]._id, reservas[0]._id);
+  await addHospedeReserva(hospedes[0]._id, reservas[0]._id);
   // console.log("\n>> hr00:\n", hr00);
-  var hr11 = await addHospedeReserva(hospedes[1]._id, reservas[1]._id);
+  await addHospedeReserva(hospedes[1]._id, reservas[1]._id);
   // console.log("\n>> hr11:\n", hr11);
-  var hr20 = await addHospedeReserva(hospedes[2]._id, reservas[0]._id, titular = false);
+  await addHospedeReserva(hospedes[2]._id, reservas[0]._id, false);
   // console.log("\n>> hr20:\n", hr20);
-  var hr30 = await addHospedeReserva(hospedes[3]._id, reservas[0]._id, titular = false);
+  await addHospedeReserva(hospedes[3]._id, reservas[0]._id, false);
   // console.log("\n>> hr30:\n", hr30);
 
-  t1 = await pushCartaoChaveToFunc(func[0]._id, cards[0]);
-  t2 = await pushCartaoChaveToReserva(reservas[0]._id, cards[1]);
-  t3 = await pushCartaoChaveToReserva(reservas[0]._id, cards[2]);
-  t4 = await pushCartaoChaveToReserva(reservas[0]._id, cards[3]);
-  t5 = await pushCartaoChaveToFunc(func[1]._id, cards[4]);
-  t6 = await pushCartaoChaveToReserva(reservas[1]._id, cards[5]);
+  await pushCartaoChaveToFunc(func[0]._id, cards[0]);
+  await pushCartaoChaveToReserva(reservas[0]._id, cards[1]);
+  await pushCartaoChaveToReserva(reservas[0]._id, cards[2]);
+  await pushCartaoChaveToReserva(reservas[0]._id, cards[3]);
+  await pushCartaoChaveToFunc(func[1]._id, cards[4]);
+  await pushCartaoChaveToReserva(reservas[1]._id, cards[5]);
 
   var carros = await addCarros();
 
-  c1 = await pushCarroToFunc(func[0]._id, carros[0]);
-  c2 = await pushCarroToFunc(func[1]._id, carros[1]);
-  c3 = await pushCarroToHospede(hospedes[0]._id, carros[2]);
+  await pushCarroToFunc(func[0]._id, carros[0]);
+  await pushCarroToFunc(func[1]._id, carros[1]);
+  await pushCarroToHospede(hospedes[0]._id, carros[2]);
 
 
-  funcionario = await getFuncionarioWithPopulate({ _id: func[0]._id });
+  const funcionario = await getFuncionarioWithPopulate({ _id: func[0]._id });
   console.log("\n>> populated func1:\n", funcionario);
 
   // servico = await getServicoWithPopulate(serv[1]._id);
