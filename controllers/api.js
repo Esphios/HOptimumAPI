@@ -1,336 +1,539 @@
-// const path = require('path');
+const mongoose = require("mongoose");
 const {
-  getPeople,
-  createHospede,
-  createFuncionario,
-  createCarro,
-  addReservaServico,
   addHospedeReserva,
+  addReservaServico,
+  createCarro,
+  createFuncionario,
+  createHospede,
   createLogCarro: logCarro,
   createReserva,
-  pushCarroToFunc,
-  pushCarroToHospede,
+  getCredentialRecordByEmail,
+  getFuncionarioWithPopulate: getFuncionario,
+  getHospedeWithPopulate: getHospede,
+  getPeople,
   getReservaWithPopulate: getReserva,
   getServicoWithPopulate: getServico,
-  getHospedeWithPopulate: getHospede,
+  pushCarroToFunc,
+  pushCarroToHospede,
 } = require("../scripts/utilsDB.js");
 const db = require("../models");
-const { sendToClient } = require("./websocket.js");
+const {
+  authenticateClientConnection,
+  sendToClient,
+} = require("./websocket.js");
+const {
+  hashPassword,
+  isPasswordHash,
+  issueAuthToken,
+  sanitizeResponseDocument,
+  verifyPassword,
+} = require("../scripts/security");
 
-const isValid = (string) => string != null && string.length > 0;
-//POST '/api/login'
+const isNonEmptyString = (value) =>
+  typeof value === "string" && value.trim().length > 0;
+const isOptionalString = (value) => value == null || isNonEmptyString(value);
+const isValidDateValue = (value) =>
+  isNonEmptyString(value) && !Number.isNaN(new Date(value).getTime());
+const isValidObjectId = (value) =>
+  isNonEmptyString(value) && mongoose.Types.ObjectId.isValid(value);
+const isOptionalObjectIdArray = (value) =>
+  value == null ||
+  (Array.isArray(value) && value.every((entry) => isValidObjectId(entry)));
+const sanitizeUserPayload = (payload) => sanitizeResponseDocument(payload);
+const reservationBelongsToHospede = (reserva, hospedeId) =>
+  Array.isArray(reserva?.hospedes) &&
+  reserva.hospedes.some(
+    (entry) => String(entry?.hospede?._id || entry?.hospede) === String(hospedeId)
+  );
+const randomItem = (items) =>
+  Array.isArray(items) && items.length > 0
+    ? items[Math.floor(Math.random() * items.length)]
+    : null;
+
 const login = async (req, res) => {
   const email = req.body.email;
   const senha = req.body.senha;
   const id = req.body.id;
 
-  // console.log(req.body);
-
-  if (!isValid(email) || !isValid(senha) || !isValid(id))
-    return res.status(400).send({ error: "Informações faltando" });
-
-  var p = await getPeople({ email: email, senha: senha });
-
-  switch (p.type) {
-
-    case "hospede":
-      if (!p.data.conexoes.includes(id)) await db.Hospede.updateOne({ _id: p.data._id }, { $push: { conexoes: id } });
-      console.log("logged in: ", email, id);
-      return res.status(200).json({ hospede: p.data });
-
-    case "funcionario":
-      await db.Funcionario.updateOne({ _id: p.data._id }, { $push: { conexoes: id } });
-      console.log("logged in: ", email, id);
-      if (p.data.cargo.nome == "segurança") {
-        p.data = JSON.parse(JSON.stringify(p.data))
-        p.data.relatos = await db.Relato.find({}).populate({
-          path: 'hospede',
-          select: '-senha',
-          populate: {
-            path: 'reservas',
-            populate: {
-              path: 'reserva',
-              populate: {
-                path: 'quarto'
-              }
-            }
-          }
-        });
-      }
-      return res.status(200).send({ funcionario: p.data });
-
-    default:
-      return res
-        .status(404)
-        .send({ error: "Pessoa não encontrada, confira as credenciais" });
+  if (!isNonEmptyString(email) || !isNonEmptyString(senha) || !isNonEmptyString(id)) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
   }
+
+  const credentialRecord = await getCredentialRecordByEmail(email);
+  if (credentialRecord.type == null || credentialRecord.data == null) {
+    return res
+      .status(404)
+      .send({ error: "Pessoa nÃ£o encontrada, confira as credenciais" });
+  }
+
+  const passwordMatches = await verifyPassword(senha, credentialRecord.data.senha);
+  if (!passwordMatches) {
+    return res
+      .status(404)
+      .send({ error: "Pessoa nÃ£o encontrada, confira as credenciais" });
+  }
+
+  if (!isPasswordHash(credentialRecord.data.senha)) {
+    const senhaHash = await hashPassword(senha);
+    const collection =
+      credentialRecord.type === "funcionario" ? db.Funcionario : db.Hospede;
+
+    await collection.updateOne(
+      { _id: credentialRecord.data._id },
+      { $set: { senha: senhaHash } }
+    );
+  }
+
+  const user =
+    credentialRecord.type === "funcionario"
+      ? await getFuncionario({ _id: credentialRecord.data._id })
+      : await getHospede({ _id: credentialRecord.data._id });
+
+  if (credentialRecord.type === "hospede") {
+    if (!user.conexoes.includes(id)) {
+      await db.Hospede.updateOne({ _id: user._id }, { $push: { conexoes: id } });
+    }
+  } else {
+    await db.Funcionario.updateOne({ _id: user._id }, { $push: { conexoes: id } });
+
+    if (user?.cargo?.nome === "seguranÃ§a") {
+      const plainUser = JSON.parse(JSON.stringify(user));
+      plainUser.relatos = await db.Relato.find({}).populate({
+        path: "hospede",
+        select: "-senha",
+        populate: {
+          path: "reservas",
+          populate: {
+            path: "reserva",
+            populate: {
+              path: "quarto",
+            },
+          },
+        },
+      });
+
+      const token = issueAuthToken({
+        userId: credentialRecord.data._id,
+        userType: credentialRecord.type,
+        roleName: credentialRecord.data?.cargo?.nome || null,
+      });
+      authenticateClientConnection(id, {
+        userId: String(credentialRecord.data._id),
+        userType: credentialRecord.type,
+        roleName: credentialRecord.data?.cargo?.nome || null,
+      });
+
+      console.log("logged in: ", email, id);
+      return res.status(200).send({ token, funcionario: sanitizeUserPayload(plainUser) });
+    }
+  }
+
+  const token = issueAuthToken({
+    userId: credentialRecord.data._id,
+    userType: credentialRecord.type,
+    roleName: credentialRecord.data?.cargo?.nome || null,
+  });
+  authenticateClientConnection(id, {
+    userId: String(credentialRecord.data._id),
+    userType: credentialRecord.type,
+    roleName: credentialRecord.data?.cargo?.nome || null,
+  });
+
+  console.log("logged in: ", email, id);
+  return credentialRecord.type === "funcionario"
+    ? res.status(200).send({ token, funcionario: sanitizeUserPayload(user) })
+    : res.status(200).json({ token, hospede: sanitizeUserPayload(user) });
 };
 
-//POST '/api/garagem'
 const garagem = async (req, res) => {
   const placa = req.body.placa;
   const status = req.body.status;
 
-  if (!isValid(placa) || !isValid(status))
-    return res.status(400).send({ error: "Informações faltando" });
+  if (!isNonEmptyString(placa) || !isNonEmptyString(status)) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
+  }
 
-  var carro = await db.Carro.findOne({ placa: placa });
-  if (carro == null) return res.status(404).send({ error: "carro não cadastrado" });
+  const carro = await db.Carro.findOne({ placa });
+  if (carro == null) {
+    return res.status(404).send({ error: "carro nÃ£o cadastrado" });
+  }
 
-  var p = await getPeople({ carros: carro });
-  if (p == null) return res.status(404).send({ error: "dono do carro não encontrado" });
+  const person = await getPeople({ carros: carro });
+  if (person == null || person.data == null) {
+    return res.status(404).send({ error: "dono do carro nÃ£o encontrado" });
+  }
 
-  var log = await logCarro({ status: status, carro: carro });
+  const log = await logCarro({ status, carro });
   await db.Carro.updateOne({ _id: carro._id }, { $push: { registros: log } });
 
-  if (p.data.conexoes != null && p.data.conexoes.length > 0)
-    p.data.conexoes.forEach((id) => sendToClient(id, (JSON.stringify(log))));
+  if (Array.isArray(person.data.conexoes) && person.data.conexoes.length > 0) {
+    person.data.conexoes.forEach((connectionId) =>
+      sendToClient(connectionId, JSON.stringify(log))
+    );
+  }
 
   return res.status(200).send(log);
 };
 
-
-
-//POST '/api/statusservico'
 const statusServico = async (req, res) => {
   const id = req.body.id;
   const status = req.body.status;
 
-  if (!isValid(id) || !isValid(status))
-    return res.status(400).send({ error: "Informações faltando" });
+  if (!isValidObjectId(id) || !isNonEmptyString(status)) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
+  }
 
-  var rs = await db.ReservaServico.findByIdAndUpdate(id, { status: status }, { new: true });
-  if (rs == null) return res.status(404).send({ error: "Serviço não encontrado" });
-  []
-  var reserva = await getReserva({ _id: rs.reservaId });
+  const rs = await db.ReservaServico.findByIdAndUpdate(
+    id,
+    { status },
+    { new: true }
+  );
+  if (rs == null) {
+    return res.status(404).send({ error: "ServiÃ§o nÃ£o encontrado" });
+  }
+
+  const reserva = await getReserva({ _id: rs.reservaId });
   if (reserva != null) {
-    var conn = reserva.hospedes.reduce((acc, cur) => acc.concat(cur.hospede.conexoes), []);
-    conn.forEach((c) => sendToClient(c, JSON.stringify(rs)));
+    const connections = reserva.hospedes.reduce(
+      (acc, cur) => acc.concat(cur.hospede.conexoes),
+      []
+    );
+    connections.forEach((connectionId) =>
+      sendToClient(connectionId, JSON.stringify(rs))
+    );
   }
 
   return res.status(200).send(rs);
 };
 
-//POST '/api/cadastro'
 const cadastro = async (req, res) => {
   const tipo = req.body.tipo;
-  let dados = {};
+  const carros = req.body.carros;
+
+  if (!Array.isArray(carros) && carros != null) {
+    return res.status(400).send({ error: "Lista de carros invÃ¡lida" });
+  }
 
   switch (tipo) {
-    case 'funcionario':
-      dados.cpf = req.body.cpf
-      dados.nome = req.body.nome
-      dados.email = req.body.email
-      dados.nascimento = req.body.nascimento
-      dados.senha = req.body.senha
-      dados.cargo = req.body.cargo
+    case "funcionario": {
+      const dados = {
+        cpf: req.body.cpf,
+        nome: req.body.nome,
+        email: req.body.email,
+        nascimento: req.body.nascimento,
+        senha: req.body.senha,
+        cargo: req.body.cargo,
+        genero: req.body.genero,
+        telefone: req.body.telefone,
+      };
 
-      if (!Object.values(dados).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
+      if (
+        ![
+          dados.cpf,
+          dados.nome,
+          dados.email,
+          dados.nascimento,
+          dados.senha,
+          dados.cargo,
+        ].every(isNonEmptyString) ||
+        !isValidDateValue(dados.nascimento) ||
+        !isOptionalString(dados.genero) ||
+        !isOptionalString(dados.telefone)
+      ) {
+        return res
+          .status(400)
+          .send({ error: "InformaÃ§Ãµes faltando, cheque os dados novamente" });
+      }
 
-      dados.cargo = await db.Cargo.findOne({ nome: dados.cargo })
-      if (dados.cargo == null) return res.status(404).send({ error: "Cargo não encontrado" })
+      const cargo = await db.Cargo.findOne({ nome: dados.cargo });
+      if (cargo == null) {
+        return res.status(404).send({ error: "Cargo nÃ£o encontrado" });
+      }
 
-      // dados.carros = req.body.carros
-      dados.genero = req.body.genero
-      dados.telefone = req.body.telefone
+      const carIds = Array.isArray(carros) ? carros : [];
+      if (!isOptionalObjectIdArray(carIds)) {
+        return res.status(400).send({ error: "Lista de carros invÃ¡lida" });
+      }
 
-      let func = await createFuncionario(dados);
+      const func = await createFuncionario({
+        ...dados,
+        cargo,
+        senha: await hashPassword(dados.senha),
+      });
 
-      let cars = req.body.carros;
+      await Promise.all(
+        carIds.map(async (carId) => {
+          const carro = await db.Carro.findById(carId);
+          if (carro == null) {
+            return null;
+          }
 
-      let carArray = await Promise.all(cars.map(async (id) => {
-        let carro = await db.Carro.findById(id)
-        if (carro == null) return null;
-        return await pushCarroToFunc(func._id, carro);
-      }));
+          return pushCarroToFunc(func._id, carro);
+        })
+      );
 
-      return res.status(200).send(func)
+      return res.status(200).send(sanitizeUserPayload(func));
+    }
 
-    case 'hospede':
-      dados.cpf = req.body.cpf
-      dados.nome = req.body.nome
-      dados.email = req.body.email
-      dados.nascimento = req.body.nascimento
-      dados.senha = req.body.senha
+    case "hospede": {
+      const dados = {
+        cpf: req.body.cpf,
+        nome: req.body.nome,
+        email: req.body.email,
+        nascimento: req.body.nascimento,
+        senha: req.body.senha,
+        genero: req.body.genero,
+        telefone: req.body.telefone,
+      };
 
-      if (!Object.values(dados).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
+      if (
+        ![
+          dados.cpf,
+          dados.nome,
+          dados.email,
+          dados.nascimento,
+          dados.senha,
+        ].every(isNonEmptyString) ||
+        !isValidDateValue(dados.nascimento) ||
+        !isOptionalString(dados.genero) ||
+        !isOptionalString(dados.telefone)
+      ) {
+        return res
+          .status(400)
+          .send({ error: "InformaÃ§Ãµes faltando, cheque os dados novamente" });
+      }
 
-      // let carro = await db.Carro.findOne({ placa: req.body.carro });
+      const carPlates = Array.isArray(carros) ? carros : [];
+      if (!carPlates.every((placa) => isNonEmptyString(placa))) {
+        return res.status(400).send({ error: "Lista de carros invÃ¡lida" });
+      }
 
-      dados.genero = req.body.genero
-      dados.telefone = req.body.telefone
+      const hospede = await createHospede({
+        ...dados,
+        senha: await hashPassword(dados.senha),
+      });
 
-      let hospede = await createHospede(dados);
+      await Promise.all(
+        carPlates.map(async (placa) => {
+          const carro = await db.Carro.findOne({ placa });
+          if (carro == null) {
+            return null;
+          }
 
-      let carros = req.body.carros;
+          return pushCarroToHospede(hospede._id, carro);
+        })
+      );
 
-      await Promise.all(carros.map(async (c) => {
-        let carro = await db.Carro.findOne({ placa: c })
-        if (carro == null) return null;
-        return await pushCarroToHospede(hospede._id, carro);
-      }));
-
-      return res.status(200).send(hospede);
+      return res.status(200).send(sanitizeUserPayload(hospede));
+    }
 
     default:
-      return res.status(400).send({ error: "Tipo de cadastro não especificado" })
+      return res.status(400).send({ error: "Tipo de cadastro nÃ£o especificado" });
   }
 };
 
-//GET '/api/servicos'
-const servicos = async (req, res) => {
-  return res.status(200).send(await db.Servico.find({}))
-};
+const servicos = async (req, res) => res.status(200).send(await db.Servico.find({}));
 
-//POST '/api/addcarro'
 const addCarro = async (req, res) => {
-  let carro = {
+  const carro = {
     cor: req.body.cor,
     modelo: req.body.modelo,
     placa: req.body.placa,
   };
 
-  if (!Object.values(carro).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" })
+  if (!Object.values(carro).every(isNonEmptyString)) {
+    return res
+      .status(400)
+      .send({ error: "InformaÃ§Ãµes faltando, cheque os dados novamente" });
+  }
 
-  let test = await db.Carro.findOne({ placa: carro.placa })
-  if (test != null) return res.status(400).send({ error: "Placa já existe no sistema" })
+  const existingCar = await db.Carro.findOne({ placa: carro.placa });
+  if (existingCar != null) {
+    return res.status(400).send({ error: "Placa jÃ¡ existe no sistema" });
+  }
 
-  let c = await createCarro(carro);
-  return res.status(200).send(c);
+  return res.status(200).send(await createCarro(carro));
 };
 
-//POST '/api/getcarro'
 const getCarro = async (req, res) => {
-  let carro = {
-    cor: req.body.cor,
-    modelo: req.body.modelo,
-    placa: req.body.placa,
+  const carro = {
+    cor: req.body.cor || req.query.cor,
+    modelo: req.body.modelo || req.query.modelo,
+    placa: req.body.placa || req.query.placa,
   };
 
-  let c = await db.Carro.findOne(carro)
-  if (c == null) return res.status(404).send({ error: "Carro não encontrado" })
+  if (!Object.values(carro).some((value) => isNonEmptyString(value))) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
+  }
 
-  return res.status(200).send(c);
+  const foundCar = await db.Carro.findOne(
+    Object.fromEntries(
+      Object.entries(carro).filter(([, value]) => isNonEmptyString(value))
+    )
+  );
+  if (foundCar == null) {
+    return res.status(404).send({ error: "Carro nÃ£o encontrado" });
+  }
+
+  return res.status(200).send(foundCar);
 };
 
-function random_item(items) {
-  return items[Math.floor(Math.random() * items.length)];
-}
-
-//POST '/api/addservico'
 const addServico = async (req, res) => {
   const idServico = req.body.idServico;
   const idReserva = req.body.idReserva;
 
-  if (!isValid(idServico) || !isValid(idReserva))
-    return res.status(400).send({ error: "Informações faltando" });
-
-  let s = await getServico({ _id: idServico });
-  let r = await getReserva({ _id: idReserva });
-
-  if (s == null || r == null)
-    return res.status(404).send({ error: "Um ou mais itens não foram encontrados." });
-
-  let c = null;
-  if (s.tipo == "Serviço de quarto") {
-    c = await db.Cargo.find({ nome: "limpeza" })
-  } else {
-    c = await db.Cargo.find({ nome: "cozinha" })
+  if (!isValidObjectId(idServico) || !isValidObjectId(idReserva)) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
   }
-  let funcs = await db.Funcionario.find({ cargo: c });
-  let doc = await addReservaServico(idReserva, idServico, random_item(funcs));
 
-  return res.status(200).send(doc);
+  const servico = await getServico(idServico);
+  const reserva = await getReserva({ _id: idReserva });
+  if (servico == null || reserva == null) {
+    return res
+      .status(404)
+      .send({ error: "Um ou mais itens nÃ£o foram encontrados." });
+  }
+
+  if (
+    req.auth?.userType === "hospede" &&
+    !reservationBelongsToHospede(reserva, req.auth.userId)
+  ) {
+    return res.status(403).send({ error: "Reserva nÃ£o pertence ao hospede autenticado" });
+  }
+
+  const cargoQuery =
+    servico.tipo === "ServiÃ§o de quarto"
+      ? { nome: "limpeza" }
+      : { nome: "cozinha" };
+  const cargos = await db.Cargo.find(cargoQuery);
+  const funcionarios = await db.Funcionario.find({ cargo: cargos });
+  const assignedFuncionario = randomItem(funcionarios);
+
+  if (assignedFuncionario == null) {
+    return res.status(409).send({ error: "Nenhum funcionÃ¡rio disponÃ­vel" });
+  }
+
+  return res
+    .status(200)
+    .send(await addReservaServico(idReserva, idServico, assignedFuncionario));
 };
 
-//GET '/api/quartos'
-const getQuartos = async (req, res) => {
-  let quartos = await db.Quarto.find({});
-  return res.status(200).send(quartos);
-}
+const getQuartos = async (req, res) =>
+  res.status(200).send(await db.Quarto.find({}));
+
+const resolveReservationInput = async (payload) => {
+  if (
+    !isValidDateValue(payload.checkIn) ||
+    !isValidDateValue(payload.checkOut) ||
+    !isValidObjectId(payload.quarto)
+  ) {
+    return { error: "InformaÃ§Ãµes faltando, cheque os dados novamente" };
+  }
+
+  const checkIn = new Date(payload.checkIn);
+  const checkOut = new Date(payload.checkOut);
+  if (checkIn >= checkOut) {
+    return { error: "PerÃ­odo da reserva invÃ¡lido" };
+  }
+
+  const quarto = await db.Quarto.findById(payload.quarto);
+  if (quarto == null) {
+    return { error: "Quarto nÃ£o encontrado", status: 404 };
+  }
+
+  return { checkIn, checkOut, quarto };
+};
+
+const findReservationConflict = async (reserva) =>
+  db.Reserva.findOne({
+    status: "ATIVA",
+    $or: [
+      {
+        quarto: reserva.quarto,
+        checkIn: { $lte: reserva.checkIn },
+        checkOut: { $gte: reserva.checkIn },
+      },
+      {
+        quarto: reserva.quarto,
+        checkIn: { $lte: reserva.checkOut },
+        checkOut: { $gte: reserva.checkOut },
+      },
+      {
+        quarto: reserva.quarto,
+        checkIn: { $gt: reserva.checkIn },
+        checkOut: { $lt: reserva.checkOut },
+      },
+    ],
+  });
 
 const checkReserva = async (req, res) => {
-  let reserva = {
-    checkIn: req.body.checkIn,
-    checkOut: req.body.checkOut,
-    quarto: req.body.quarto
+  const reserva = await resolveReservationInput(req.body);
+  if (reserva.error) {
+    return res.status(reserva.status || 400).send({ error: reserva.error });
   }
-  if (!Object.values(reserva).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" });
 
-  reserva.checkIn = new Date(reserva.checkIn);
-  reserva.checkOut = new Date(reserva.checkOut);
+  const occupies = await findReservationConflict(reserva);
+  if (occupies == null) {
+    return res.status(200).send(reserva);
+  }
 
-  reserva.quarto = await db.Quarto.findById(req.body.quarto);
-  if (reserva.quarto == null) return res.status(404).send({ error: "Quarto não encontrado" });
+  return res.status(406).send({ error: "Reserva invÃ¡lida" });
+};
 
-  let occupies = await db.Reserva.findOne({
-    status: "ATIVA",
-    $or: [
-      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkIn }, checkOut: { $gte: reserva.checkIn } },
-      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkOut }, checkOut: { $gte: reserva.checkOut } },
-      { quarto: reserva.quarto, checkIn: { $gt: reserva.checkIn }, checkOut: { $lt: reserva.checkOut } }
-    ]
-  });
-
-  if (occupies == null) return res.status(200).send(reserva);
-  return res.status(406).send({ error: "Reserva inválida" });
-
-}
-
-//POST '/api/hospede'
 const checkHospede = async (req, res) => {
-  let hospede = await db.Hospede.findOne({ cpf: req.body.cpf }, "nome");
-
-  if (hospede == null) return res.status(404).send({ error: "Pessoa não encontrada" });
-  return res.status(200).send(hospede);
-
-}
-
-//POST '/api/reserva'
-const addReserva = async (req, res) => {
-  let reserva = {
-    checkIn: req.body.checkIn,
-    checkOut: req.body.checkOut,
-    quarto: req.body.quarto
+  if (!isNonEmptyString(req.body.cpf)) {
+    return res.status(400).send({ error: "CPF invÃ¡lido" });
   }
-  if (!Object.values(reserva).every(isValid)) return res.status(400).send({ error: "Informações faltando, cheque os dados novamente" });
 
-  reserva.checkIn = new Date(reserva.checkIn);
-  reserva.checkOut = new Date(reserva.checkOut);
+  const hospede = await db.Hospede.findOne({ cpf: req.body.cpf }, "nome");
+  if (hospede == null) {
+    return res.status(404).send({ error: "Pessoa nÃ£o encontrada" });
+  }
 
-  reserva.quarto = await db.Quarto.findById(req.body.quarto);
-  if (reserva.quarto == null) return res.status(404).send({ error: "Quarto não encontrado" });
+  return res.status(200).send(hospede);
+};
 
-  let occupies = await db.Reserva.findOne({
-    status: "ATIVA",
-    $or: [
-      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkIn }, checkOut: { $gte: reserva.checkIn } },
-      { quarto: reserva.quarto, checkIn: { $lte: reserva.checkOut }, checkOut: { $gte: reserva.checkOut } },
-      { quarto: reserva.quarto, checkIn: { $gt: reserva.checkIn }, checkOut: { $lt: reserva.checkOut } }
-    ]
-  });
-  if (occupies != null) return res.status(406).send({ error: "Reserva inválida" });
+const addReserva = async (req, res) => {
+  if (
+    !isValidObjectId(req.body.titular) ||
+    !isOptionalObjectIdArray(req.body.dependentes)
+  ) {
+    return res
+      .status(400)
+      .send({ error: "InformaÃ§Ãµes faltando, cheque os dados novamente" });
+  }
 
-  let r = await createReserva(reserva)
+  const reserva = await resolveReservationInput(req.body);
+  if (reserva.error) {
+    return res.status(reserva.status || 400).send({ error: reserva.error });
+  }
 
-  let docDep = [];
+  const occupies = await findReservationConflict(reserva);
+  if (occupies != null) {
+    return res.status(406).send({ error: "Reserva invÃ¡lida" });
+  }
 
-  if (req.body.dependentes != null && req.body.dependentes.length > 0)
-    docDep = await Promise.all(req.body.dependentes.map(async (d) => {
-      return await addHospedeReserva(d, r._id, titular = false);
-    }));
+  const createdReserva = await createReserva(reserva);
+  const dependentes = Array.isArray(req.body.dependentes) ? req.body.dependentes : [];
 
-  docDep.push(await addHospedeReserva(req.body.titular, r._id))
+  await Promise.all(
+    dependentes.map((dependenteId) =>
+      addHospedeReserva(dependenteId, createdReserva._id, false)
+    )
+  );
+  await addHospedeReserva(req.body.titular, createdReserva._id);
 
-  return res.status(200).send(await getReserva({ _id: r._id }));
-}
+  return res.status(200).send(await getReserva({ _id: createdReserva._id }));
+};
 
-//GET '/api/hospedes'
 const listHospedes = async (req, res) => {
-  let now = new Date();
-  now.setHours(0,0,0,0);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
 
-  let list = await db.Reserva.find({ checkIn: { $lte: now }, checkOut: { $gte: now } })
+  const list = await db.Reserva.find({
+    checkIn: { $lte: now },
+    checkOut: { $gte: now },
+  })
     .populate("cartoesChave")
     .populate("quarto")
     .populate({
@@ -339,7 +542,7 @@ const listHospedes = async (req, res) => {
         path: "hospede",
         select: "-senha -reservas",
         populate: {
-          path: "carros"
+          path: "carros",
         },
       },
     })
@@ -348,60 +551,68 @@ const listHospedes = async (req, res) => {
       populate: {
         path: "servico",
       },
-    })
+    });
 
   return res.status(200).send(list);
-}
+};
 
-//POST '/api/report'
 const report = async (req, res) => {
   const id = req.body.id;
   const text = req.body.text;
 
-  if (!isValid(id) || !isValid(text))
-    return res.status(400).send({ error: "Informações faltando" });
+  if (!isValidObjectId(id) || !isNonEmptyString(text)) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
+  }
 
-  let hospede = await getHospede({ _id: id });
+  if (String(req.auth?.userId) !== String(id)) {
+    return res.status(403).send({ error: "Relato permitido apenas para o hospede autenticado" });
+  }
 
-  if (hospede == null)
+  const hospede = await getHospede({ _id: id });
+  if (hospede == null) {
     return res
       .status(404)
-      .send({ error: "Pessoa não encontrada, confira as credenciais" });
+      .send({ error: "Pessoa nÃ£o encontrada, confira as credenciais" });
+  }
 
-  let relato = await db.Relato.create({ texto: text, hospede: hospede })
+  const relato = await db.Relato.create({ texto: text, hospede });
+  await db.Hospede.findByIdAndUpdate(id, { $push: { relatos: relato } });
 
-  let doc = await db.Hospede.findOneAndUpdate(id, { $push: { relatos: relato } })
-
-  let cargo = await db.Cargo.find({ nome: "segurança" })
-  let funcs = await db.Funcionario.find({ cargo: cargo }, 'conexoes')
-
-  const conns = funcs.reduce((acc, cur) => acc.concat(cur.conexoes), []);
-  conns.forEach((uid) => sendToClient(uid, JSON.stringify(relato)));
+  const cargos = await db.Cargo.find({ nome: "seguranÃ§a" });
+  const funcs = await db.Funcionario.find({ cargo: cargos }, "conexoes");
+  const connections = funcs.reduce((acc, cur) => acc.concat(cur.conexoes), []);
+  connections.forEach((connectionId) =>
+    sendToClient(connectionId, JSON.stringify(relato))
+  );
 
   return res.status(200).send(relato);
-}
+};
 
-//POST '/api/updatereserva'
 const updateReserva = async (req, res) => {
   const id = req.body.id;
   let update = req.body.update;
 
-  if (!isValid(id) || !isValid(update))
-    return res.status(400).send({ error: "Informações faltando" });
+  if (!isValidObjectId(id) || !isNonEmptyString(update)) {
+    return res.status(400).send({ error: "InformaÃ§Ãµes faltando" });
+  }
 
   update = update.toUpperCase();
-  if (!["ATIVA", "FINALIZADA", "CANCELADA"].includes(update))
-    return res.status(400).send({ error: "Update inválido" });
+  if (!["ATIVA", "FINALIZADA", "CANCELADA"].includes(update)) {
+    return res.status(400).send({ error: "Update invÃ¡lido" });
+  }
 
-  var query = db.Reserva.findByIdAndUpdate(id, { status: update }, { new: true });
-  await query.exec().then(function (ok) {
-    return res.status(200).send(ok);
-  }).catch(function (err) {
-    return res.status(400).send({ error: "Query negada", data: err });
-  });
-}
+  try {
+    const reserva = await db.Reserva.findByIdAndUpdate(
+      id,
+      { status: update },
+      { new: true }
+    );
+    return res.status(200).send(reserva);
+  } catch (error) {
+    return res.status(400).send({ error: "Query negada", data: error });
+  }
+};
 
-//export controller functions
 module.exports = {
   updateReserva,
   report,

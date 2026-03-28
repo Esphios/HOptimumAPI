@@ -76,6 +76,8 @@ const run = async () => {
       MONGODB_URI: `mongodb://127.0.0.1:${unavailableMongoPort}/hoptimum_test`,
       MONGODB_CONNECT_MAX_ATTEMPTS: "2",
       MONGODB_CONNECT_RETRY_DELAY_MS: "250",
+      AUTH_TOKEN_SECRET: "smoke-test-secret",
+      ESP_SHARED_SECRET: "smoke-test-device-secret",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

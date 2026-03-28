@@ -19,7 +19,7 @@ validateConfig();
 startupState.markPhase("bootstrapping");
 
 const app = express()
-  .use(express.json())
+  .use(express.json({ limit: "100kb" }))
   .get("/health/liveness", (req, res) => {
     res.status(200).json({
       status: "alive",
