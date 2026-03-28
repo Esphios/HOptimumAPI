@@ -117,6 +117,11 @@ const login = async (req, res) => {
         userType: credentialRecord.type,
         roleName: credentialRecord.data?.cargo?.nome || null,
       });
+      authenticateClientConnection(id, {
+        userId: String(credentialRecord.data._id),
+        userType: credentialRecord.type,
+        roleName: credentialRecord.data?.cargo?.nome || null,
+      });
 
       console.log("logged in: ", email, id);
       return res.status(200).send({ token, funcionario: sanitizeUserPayload(plainUser) });
