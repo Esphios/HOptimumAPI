@@ -1,52 +1,95 @@
-# HOptimumAPI
-Aplicacao de sistemas integrados para redes de hotelaria.
+# HOptimum API
 
-Esta e a API desenvolvida em Node.js com MongoDB para o HOptimum, uma aplicacao usada como trabalho de conclusao de curso em Engenharia da Computacao em 2022.
+Backend for an integrated hotel-management prototype developed as a Computer Engineering capstone project.
 
-## Como usar
+The service connects hotel operations, authenticated clients, and connected devices through an HTTP API and WebSocket communication.
+
+## Highlights
+
+- REST API built with Express
+- MongoDB persistence through Mongoose
+- WebSocket communication for connected clients and devices
+- Token-based authentication and a separate shared secret for device authentication
+- Explicit liveness and readiness probes
+- Controlled startup retries and graceful shutdown
+- Destructive startup tasks disabled by default
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Client[Web client] -->|HTTP API| API[Express API]
+    Device[Connected device] -->|WebSocket| API
+    API --> MongoDB[(MongoDB)]
+```
+
+The HTTP server starts first so orchestration platforms can query liveness. Functional routes remain unavailable until MongoDB and mandatory bootstrap tasks are ready.
+
+## Tech stack
+
+Node.js, Express, MongoDB, Mongoose, WebSocket (`ws`), ESLint
+
+## Running locally
+
+Requirements:
+
+- A current Node.js LTS release
+- A reachable MongoDB instance
 
 ```bash
+git clone https://github.com/Esphios/HOptimumAPI.git
+cd HOptimumAPI
 npm install
-copy .env.example .env
+cp .env.example .env
 npm run lint
 npm start
 ```
 
-## Requisitos de ambiente
+On Windows Command Prompt, replace the copy command with:
 
-O projeto depende de um MongoDB acessivel no momento da inicializacao.
-
-Variaveis de ambiente esperadas:
-
-```env
-PORT=3000
-MONGODB_URI=mongodb://localhost:27017/hoptimum
-AUTH_TOKEN_SECRET=replace-with-a-long-random-secret
-ESP_SHARED_SECRET=replace-with-a-device-shared-secret
+```bat
+copy .env.example .env
 ```
 
-## Contrato de startup
+Replace every placeholder in `.env` before starting the service. Never commit that file.
 
-- O processo sobe a porta HTTP antes do bootstrap completo apenas para expor health checks.
-- A aplicacao so fica pronta para trafego funcional depois de conectar no MongoDB.
-- `resetAllConnections()` so roda quando `ALLOW_DESTRUCTIVE_STARTUP_TASKS=true`.
-- Enquanto o bootstrap nao terminar, rotas fora de health retornam `503 Service unavailable`.
-- Se a conexao inicial com o MongoDB falhar por erro transitorio, o processo aplica retry controlado antes de encerrar.
+## Environment variables
 
-## Variaveis de ambiente
-
-- `PORT`: porta HTTP do servico.
-- `MONGODB_URI`: string de conexao do MongoDB. Obrigatoria.
-- `MONGODB_CONNECT_MAX_ATTEMPTS`: quantidade maxima de tentativas de conexao inicial.
-- `MONGODB_CONNECT_RETRY_DELAY_MS`: intervalo entre tentativas de conexao inicial.
-- `AUTH_TOKEN_SECRET`: segredo usado para assinar tokens de autenticacao. Obrigatoria.
-- `AUTH_TOKEN_TTL_MS`: TTL dos tokens de autenticacao em milissegundos.
-- `ESP_SHARED_SECRET`: segredo compartilhado exigido no header `x-esp-secret` para `/api/auth`.
-- `ALLOW_DESTRUCTIVE_STARTUP_TASKS`: habilita tarefas destrutivas de bootstrap apenas quando explicitamente `true`.
-- `ALLOWED_WS_ORIGINS`: lista separada por virgula de origins permitidas para WebSocket.
-- `TZ`: timezone do processo.
+| Variable | Purpose |
+| --- | --- |
+| `PORT` | HTTP port, defaulting to `3000` |
+| `MONGODB_URI` | MongoDB connection string |
+| `MONGODB_CONNECT_MAX_ATTEMPTS` | Maximum initial connection attempts |
+| `MONGODB_CONNECT_RETRY_DELAY_MS` | Delay between initial connection attempts |
+| `AUTH_TOKEN_SECRET` | Secret used to sign authentication tokens |
+| `AUTH_TOKEN_TTL_MS` | Authentication-token lifetime in milliseconds |
+| `ESP_SHARED_SECRET` | Shared secret required by device authentication |
+| `ALLOW_DESTRUCTIVE_STARTUP_TASKS` | Enables destructive bootstrap tasks only when explicitly set to `true` |
+| `ALLOWED_WS_ORIGINS` | Comma-separated WebSocket origin allowlist |
+| `TZ` | Process timezone |
 
 ## Health checks
 
-- `GET /health/liveness`: indica que o processo esta vivo.
-- `GET /health/readiness`: indica se MongoDB e tarefas obrigatorias de bootstrap estao estaveis.
+| Endpoint | Meaning |
+| --- | --- |
+| `GET /health/liveness` | The process is running |
+| `GET /health/readiness` | MongoDB and mandatory bootstrap tasks are ready |
+
+During bootstrap or a database outage, functional routes return `503 Service unavailable`.
+
+## Quality commands
+
+```bash
+npm run lint
+npm run smoke:startup
+```
+
+## Known limitations
+
+- This is a capstone prototype, not a hosted production service.
+- Automated coverage is currently limited to startup smoke validation.
+- API reference documentation and an end-to-end demonstration are still pending.
+
+## License
+
+Licensed under the ISC License, as declared in `package.json`.
